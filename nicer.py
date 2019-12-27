@@ -19,7 +19,7 @@ class NICER(nn.Module):
         nima = NIMA_VGG(models.vgg16(pretrained=True))
         nima.load_state_dict(torch.load(checkpoint_nima, map_location=device))
         nima.eval()
-        can.to(device)
+        nima.to(device)
 
         # self.filters is a "leaf-variable", bc it's created directly and not as part of an operation
         self.filters = torch.tensor([0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0], dtype=torch.float32, requires_grad=True, device=device)
