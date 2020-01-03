@@ -4,7 +4,7 @@ from neural_models import *
 
 class NICER(nn.Module):
 
-    def __init__(self, checkpoint_can, checkpoint_nima, device, can_arch=8):
+    def __init__(self, checkpoint_can, checkpoint_nima, device='cpu', can_arch=8):
         super(NICER, self).__init__()
         self.device = device
 
@@ -26,6 +26,7 @@ class NICER(nn.Module):
         self.can = can
         self.nima = nima
         self.optimizer = torch.optim.SGD(params=[self.filters], lr=config.optim_lr, momentum=config.optim_momentum)
+        self.gamma = config.gamma
 
     def forward(self, image):
         filter_tensor = torch.zeros((8, 224, 224), dtype=torch.float32).to(self.device)
@@ -37,6 +38,33 @@ class NICER(nn.Module):
         distr_of_ratings = self.nima(enhanced_img)  # get nima score distribution -> tensor
 
         return distr_of_ratings, enhanced_img
+
+    def set_filters(self, filter_list):
+        for i in range(5):
+            self.filters[i] = filter_list[i]
+        self.filters[7] = filter_list[5]    # exposure is in 5 filterlist but 7 in can
+        self.filters[5] = filter_list[6]    # llf is 6 in filterlist but 5 in can
+        self.filters[6] = filter_list[7]    # nld is 7 in filterlist but 6 in can
+
+    def set_gamma(self, gamma):
+        config.gamma = gamma
+        self.gamma = gamma
+
+    def single_image_pass_can(self, image):
+        image_tensor = transforms.ToTensor()(image)        # gets called from gui, with a non-tensor image
+        filter_tensor = torch.zeros((8, image.size[1], image.size[0]), dtype=torch.float32).to(self.device)
+        for l in range(8):
+            filter_tensor[l, :, :] = self.filters.view(-1)[l]  # construct filtermap uniformly from given filters
+        mapped_img = torch.cat((image_tensor, filter_tensor), dim=0).unsqueeze(dim=0)  # concat filters and img
+
+        enhanced_img = self.can(mapped_img)  # enhance img with CAN
+        enhanced_img = enhanced_img.cpu()
+        enhanced_img = enhanced_img.detach().permute(2, 3, 1, 0).squeeze().numpy()
+
+        enhanced_clipped = np.clip(enhanced_img, 0.0, 1.0) * 255.0
+        enhanced_clipped = enhanced_clipped.astype('uint8')
+        return enhanced_clipped
+
 
     def re_init(self):
         self.filters = torch.tensor([0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0], dtype=torch.float32, requires_grad=True, device=self.device)
