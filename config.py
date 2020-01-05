@@ -16,3 +16,7 @@ optim_momentum = 0.9
 final_size = 1080
 supported_extensions = ['jpg', 'png']
 supported_extensions_raw = ['dng']
+
+
+# ----- GUI parameters:
+
