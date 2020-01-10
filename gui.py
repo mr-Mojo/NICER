@@ -272,6 +272,9 @@ class NicerGui:
         return values, self.gamma.get()
 
     def nicer(self):
+        # todo: get filter values from sliders
+        # set them as current standard
+        # optimize image with l2 loss that takes new 0 point (user preset) into account
         print("nicer")
 
 

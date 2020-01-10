@@ -6,6 +6,6 @@
     </content>
     <orderEntry type="inheritedJdk" />
     <orderEntry type="sourceFolder" forTests="false" />
-    <orderEntry type="module" module-name="Neural-Image-Assessment" />
+    <orderEntry type="module" module-name="custom_nima" />
   </component>
 </module>
