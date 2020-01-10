@@ -10,6 +10,9 @@ from tkinter.ttk import Label, Button
 
 class NicerGui:
     def __init__(self, master, screen_size):
+        if screen_size[0] > 1920:
+            screen_size = list(screen_size)
+            screen_size[0] = 1920 
         self.master = master
         self.height = int(0.85*screen_size[1])
         self.width = int(0.85*screen_size[0])

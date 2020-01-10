@@ -3,6 +3,7 @@
   <component name="ProjectModuleManager">
     <modules>
       <module fileurl="file://$PROJECT_DIR$/.idea/NICER.iml" filepath="$PROJECT_DIR$/.idea/NICER.iml" />
+      <module fileurl="file://$PROJECT_DIR$/../Neural-Image-Assessment/.idea/Neural-Image-Assessment.iml" filepath="$PROJECT_DIR$/../Neural-Image-Assessment/.idea/Neural-Image-Assessment.iml" />
     </modules>
   </component>
 </project>

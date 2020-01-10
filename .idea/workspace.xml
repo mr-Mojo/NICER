@@ -2,7 +2,24 @@
 <project version="4">
   <component name="ChangeListManager">
     <list default="true" id="584d5ca8-5ab5-4102-b05a-75afdbd2cb7b" name="Default Changelist" comment="">
+      <change afterPath="$PROJECT_DIR$/../Neural-Image-Assessment/.idea/vcs.xml" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/../Neural-Image-Assessment/predict_single_image.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/NICER.iml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/NICER.iml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/modules.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/modules.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/vcs.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/vcs.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/gui.py" beforeDir="false" afterPath="$PROJECT_DIR$/gui.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../Neural-Image-Assessment/.idea/Neural-Image-Assessment.iml" beforeDir="false" afterPath="$PROJECT_DIR$/../Neural-Image-Assessment/.idea/Neural-Image-Assessment.iml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../Neural-Image-Assessment/.idea/modules.xml" beforeDir="false" afterPath="$PROJECT_DIR$/../Neural-Image-Assessment/.idea/modules.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../Neural-Image-Assessment/mobilenet.py" beforeDir="false" afterPath="$PROJECT_DIR$/../Neural-Image-Assessment/mobilenet.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../Neural-Image-Assessment/model.py" beforeDir="false" afterPath="$PROJECT_DIR$/../Neural-Image-Assessment/model.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../Neural-Image-Assessment/out/317757_predicted.png" beforeDir="false" afterPath="$PROJECT_DIR$/../Neural-Image-Assessment/out/317757_predicted.png" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../Neural-Image-Assessment/out/408096_predicted.png" beforeDir="false" afterPath="$PROJECT_DIR$/../Neural-Image-Assessment/out/408096_predicted.png" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../Neural-Image-Assessment/out/543325_predicted.png" beforeDir="false" afterPath="$PROJECT_DIR$/../Neural-Image-Assessment/out/543325_predicted.png" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../Neural-Image-Assessment/out/610368_predicted.png" beforeDir="false" afterPath="$PROJECT_DIR$/../Neural-Image-Assessment/out/610368_predicted.png" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../Neural-Image-Assessment/out/757385_predicted.png" beforeDir="false" afterPath="$PROJECT_DIR$/../Neural-Image-Assessment/out/757385_predicted.png" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../Neural-Image-Assessment/out/769791_predicted.png" beforeDir="false" afterPath="$PROJECT_DIR$/../Neural-Image-Assessment/out/769791_predicted.png" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../Neural-Image-Assessment/test.py" beforeDir="false" afterPath="$PROJECT_DIR$/../Neural-Image-Assessment/test.py" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -28,7 +45,7 @@
   </component>
   <component name="PropertiesComponent">
     <property name="RunOnceActivity.ShowReadmeOnStart" value="true" />
-    <property name="last_opened_file_path" value="$PROJECT_DIR$" />
+    <property name="last_opened_file_path" value="$PROJECT_DIR$/../Neural-Image-Assessment" />
   </component>
   <component name="RecentsManager">
     <key name="MoveFile.RECENT_KEYS">
@@ -38,7 +55,28 @@
       <recent name="$PROJECT_DIR$" />
     </key>
   </component>
-  <component name="RunManager" selected="Python.main">
+  <component name="RunManager" selected="Python.ava_mean">
+    <configuration name="ava_mean" type="PythonConfigurationType" factoryName="Python" temporary="true">
+      <module name="Neural-Image-Assessment" />
+      <option name="INTERPRETER_OPTIONS" value="" />
+      <option name="PARENT_ENVS" value="true" />
+      <envs>
+        <env name="PYTHONUNBUFFERED" value="1" />
+      </envs>
+      <option name="SDK_HOME" value="" />
+      <option name="WORKING_DIRECTORY" value="$PROJECT_DIR$/../Neural-Image-Assessment" />
+      <option name="IS_MODULE_SDK" value="true" />
+      <option name="ADD_CONTENT_ROOTS" value="true" />
+      <option name="ADD_SOURCE_ROOTS" value="true" />
+      <option name="SCRIPT_NAME" value="$PROJECT_DIR$/../Neural-Image-Assessment/ava_mean.py" />
+      <option name="PARAMETERS" value="" />
+      <option name="SHOW_COMMAND_LINE" value="false" />
+      <option name="EMULATE_TERMINAL" value="false" />
+      <option name="MODULE_MODE" value="false" />
+      <option name="REDIRECT_INPUT" value="false" />
+      <option name="INPUT_FILE" value="" />
+      <method v="2" />
+    </configuration>
     <configuration name="main" type="PythonConfigurationType" factoryName="Python" temporary="true">
       <module name="NICER" />
       <option name="INTERPRETER_OPTIONS" value="" />
@@ -81,8 +119,53 @@
       <option name="INPUT_FILE" value="" />
       <method v="2" />
     </configuration>
+    <configuration name="predict_single_image_random_folder" type="PythonConfigurationType" factoryName="Python" temporary="true">
+      <module name="Prototype" />
+      <option name="INTERPRETER_OPTIONS" value="" />
+      <option name="PARENT_ENVS" value="true" />
+      <envs>
+        <env name="PYTHONUNBUFFERED" value="1" />
+      </envs>
+      <option name="SDK_HOME" value="" />
+      <option name="WORKING_DIRECTORY" value="$PROJECT_DIR$/../Prototype" />
+      <option name="IS_MODULE_SDK" value="true" />
+      <option name="ADD_CONTENT_ROOTS" value="true" />
+      <option name="ADD_SOURCE_ROOTS" value="true" />
+      <option name="SCRIPT_NAME" value="$PROJECT_DIR$/../Prototype/predict_single_image_random_folder.py" />
+      <option name="PARAMETERS" value="" />
+      <option name="SHOW_COMMAND_LINE" value="false" />
+      <option name="EMULATE_TERMINAL" value="false" />
+      <option name="MODULE_MODE" value="false" />
+      <option name="REDIRECT_INPUT" value="false" />
+      <option name="INPUT_FILE" value="" />
+      <method v="2" />
+    </configuration>
+    <configuration name="test_network" type="PythonConfigurationType" factoryName="Python" temporary="true">
+      <module name="FastImageProcessing_PyTorch" />
+      <option name="INTERPRETER_OPTIONS" value="" />
+      <option name="PARENT_ENVS" value="true" />
+      <envs>
+        <env name="PYTHONUNBUFFERED" value="1" />
+      </envs>
+      <option name="SDK_HOME" value="" />
+      <option name="WORKING_DIRECTORY" value="$PROJECT_DIR$/../FastImageProcessing_PyTorch" />
+      <option name="IS_MODULE_SDK" value="true" />
+      <option name="ADD_CONTENT_ROOTS" value="true" />
+      <option name="ADD_SOURCE_ROOTS" value="true" />
+      <option name="SCRIPT_NAME" value="$PROJECT_DIR$/../FastImageProcessing_PyTorch/test_network.py" />
+      <option name="PARAMETERS" value="" />
+      <option name="SHOW_COMMAND_LINE" value="false" />
+      <option name="EMULATE_TERMINAL" value="false" />
+      <option name="MODULE_MODE" value="false" />
+      <option name="REDIRECT_INPUT" value="false" />
+      <option name="INPUT_FILE" value="" />
+      <method v="2" />
+    </configuration>
     <recent_temporary>
       <list>
+        <item itemvalue="Python.ava_mean" />
+        <item itemvalue="Python.test_network" />
+        <item itemvalue="Python.predict_single_image_random_folder" />
         <item itemvalue="Python.main" />
         <item itemvalue="Python.nicer" />
       </list>
@@ -114,37 +197,53 @@
     <servers />
   </component>
   <component name="WindowStateProjectService">
-    <state width="1834" height="297" key="GridCell.Tab.0.bottom" timestamp="1576765662639">
+    <state x="2700" y="297" key="FileChooserDialogImpl" timestamp="1578644664904">
       <screen x="1920" y="0" width="1920" height="1080" />
     </state>
-    <state width="1834" height="297" key="GridCell.Tab.0.bottom/65.24.1855.1056/1920.0.1920.1080@1920.0.1920.1080" timestamp="1576765662639" />
-    <state width="1834" height="297" key="GridCell.Tab.0.center" timestamp="1576765662639">
+    <state x="2700" y="297" key="FileChooserDialogImpl/65.24.1855.1056/1920.0.1920.1080@1920.0.1920.1080" timestamp="1578644664904" />
+    <state width="1834" height="297" key="GridCell.Tab.0.bottom" timestamp="1578648000520">
       <screen x="1920" y="0" width="1920" height="1080" />
     </state>
-    <state width="1834" height="297" key="GridCell.Tab.0.center/65.24.1855.1056/1920.0.1920.1080@1920.0.1920.1080" timestamp="1576765662639" />
-    <state width="1834" height="297" key="GridCell.Tab.0.left" timestamp="1576765662639">
+    <state width="1834" height="297" key="GridCell.Tab.0.bottom/65.24.1855.1056/1920.0.1920.1080@1920.0.1920.1080" timestamp="1578648000520" />
+    <state width="1834" height="297" key="GridCell.Tab.0.center" timestamp="1578648000520">
       <screen x="1920" y="0" width="1920" height="1080" />
     </state>
-    <state width="1834" height="297" key="GridCell.Tab.0.left/65.24.1855.1056/1920.0.1920.1080@1920.0.1920.1080" timestamp="1576765662639" />
-    <state width="1834" height="297" key="GridCell.Tab.0.right" timestamp="1576765662639">
+    <state width="1834" height="297" key="GridCell.Tab.0.center/65.24.1855.1056/1920.0.1920.1080@1920.0.1920.1080" timestamp="1578648000520" />
+    <state width="1834" height="297" key="GridCell.Tab.0.left" timestamp="1578648000519">
       <screen x="1920" y="0" width="1920" height="1080" />
     </state>
-    <state width="1834" height="297" key="GridCell.Tab.0.right/65.24.1855.1056/1920.0.1920.1080@1920.0.1920.1080" timestamp="1576765662639" />
-    <state width="1834" height="366" key="GridCell.Tab.1.bottom" timestamp="1576764274722">
+    <state width="1834" height="297" key="GridCell.Tab.0.left/65.24.1855.1056/1920.0.1920.1080@1920.0.1920.1080" timestamp="1578648000519" />
+    <state width="1834" height="297" key="GridCell.Tab.0.right" timestamp="1578648000520">
       <screen x="1920" y="0" width="1920" height="1080" />
     </state>
-    <state width="1834" height="366" key="GridCell.Tab.1.bottom/65.24.1855.1056/1920.0.1920.1080@1920.0.1920.1080" timestamp="1576764274722" />
-    <state width="1834" height="366" key="GridCell.Tab.1.center" timestamp="1576764274722">
+    <state width="1834" height="297" key="GridCell.Tab.0.right/65.24.1855.1056/1920.0.1920.1080@1920.0.1920.1080" timestamp="1578648000520" />
+    <state width="1834" height="366" key="GridCell.Tab.1.bottom" timestamp="1578320507455">
       <screen x="1920" y="0" width="1920" height="1080" />
     </state>
-    <state width="1834" height="366" key="GridCell.Tab.1.center/65.24.1855.1056/1920.0.1920.1080@1920.0.1920.1080" timestamp="1576764274722" />
-    <state width="1834" height="366" key="GridCell.Tab.1.left" timestamp="1576764274722">
+    <state width="1834" height="366" key="GridCell.Tab.1.bottom/65.24.1855.1056/1920.0.1920.1080@1920.0.1920.1080" timestamp="1578320507455" />
+    <state width="1834" height="366" key="GridCell.Tab.1.center" timestamp="1578320507455">
       <screen x="1920" y="0" width="1920" height="1080" />
     </state>
-    <state width="1834" height="366" key="GridCell.Tab.1.left/65.24.1855.1056/1920.0.1920.1080@1920.0.1920.1080" timestamp="1576764274722" />
-    <state width="1834" height="366" key="GridCell.Tab.1.right" timestamp="1576764274722">
+    <state width="1834" height="366" key="GridCell.Tab.1.center/65.24.1855.1056/1920.0.1920.1080@1920.0.1920.1080" timestamp="1578320507455" />
+    <state width="1834" height="366" key="GridCell.Tab.1.left" timestamp="1578320507455">
       <screen x="1920" y="0" width="1920" height="1080" />
     </state>
-    <state width="1834" height="366" key="GridCell.Tab.1.right/65.24.1855.1056/1920.0.1920.1080@1920.0.1920.1080" timestamp="1576764274722" />
+    <state width="1834" height="366" key="GridCell.Tab.1.left/65.24.1855.1056/1920.0.1920.1080@1920.0.1920.1080" timestamp="1578320507455" />
+    <state width="1834" height="366" key="GridCell.Tab.1.right" timestamp="1578320507455">
+      <screen x="1920" y="0" width="1920" height="1080" />
+    </state>
+    <state width="1834" height="366" key="GridCell.Tab.1.right/65.24.1855.1056/1920.0.1920.1080@1920.0.1920.1080" timestamp="1578320507455" />
+    <state x="2601" y="367" key="com.intellij.ide.util.TipDialog" timestamp="1578641340573">
+      <screen x="1920" y="0" width="1920" height="1080" />
+    </state>
+    <state x="2601" y="367" key="com.intellij.ide.util.TipDialog/65.24.1855.1056/1920.0.1920.1080@1920.0.1920.1080" timestamp="1578641340573" />
+    <state x="2482" y="278" key="com.intellij.xdebugger.impl.breakpoints.ui.BreakpointsDialogFactory$2" timestamp="1578310370888">
+      <screen x="1920" y="0" width="1920" height="1080" />
+    </state>
+    <state x="2482" y="278" key="com.intellij.xdebugger.impl.breakpoints.ui.BreakpointsDialogFactory$2/65.24.1855.1056/1920.0.1920.1080@1920.0.1920.1080" timestamp="1578310370888" />
+    <state x="2575" y="236" width="672" height="678" key="search.everywhere.popup" timestamp="1578317592701">
+      <screen x="1920" y="0" width="1920" height="1080" />
+    </state>
+    <state x="2575" y="236" width="672" height="678" key="search.everywhere.popup/65.24.1855.1056/1920.0.1920.1080@1920.0.1920.1080" timestamp="1578317592701" />
   </component>
 </project>
