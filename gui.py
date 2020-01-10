@@ -11,8 +11,9 @@ from tkinter.ttk import Label, Button
 class NicerGui:
     def __init__(self, master, screen_size):
         if screen_size[0] > 1920:
-            screen_size = list(screen_size)
-            screen_size[0] = 1920 
+            screen_size = list(screen_size)     # when multiscreen, use only 1 screen
+            screen_size[0] = 1920
+            screen_size[1] = 1080
         self.master = master
         self.height = int(0.85*screen_size[1])
         self.width = int(0.85*screen_size[0])
@@ -27,6 +28,8 @@ class NicerGui:
         self.reference_img2 = None
         self.img_namestring = None
         self.img_extension = None
+        self.helper_x = None
+        self.helper_y = None
 
         # labels:
         if True:
@@ -207,6 +210,8 @@ class NicerGui:
                 img_y2 = offset_y + vertical_middle + space_btwn_imgs
                 self.tk_img_panel_one.place(x = img_x, y = img_y1)
                 self.tk_img_panel_two.place(x = img_x, y = img_y2)
+                self.helper_x = img_x
+                self.helper_y = img_y2
 
             if img_height > img_width:      # higher than wide: place next to each other
                 img_x1 = offset_x + int(0.635*0.5*self.width) - pil_img.size[0]       # get space right of line, divide it by two, subtract img width
@@ -215,6 +220,8 @@ class NicerGui:
                 img_y = offset_y + vertical_middle - int(pil_img.size[1]*0.5)
                 self.tk_img_panel_one.place(x=img_x1, y=img_y)
                 self.tk_img_panel_two.place(x=img_x2, y=img_y)
+                self.helper_x = img_x2
+                self.helper_y = img_y
 
             self.print_label['text'] = "Image loaded successfully!"
             return pil_img
@@ -253,6 +260,7 @@ class NicerGui:
             preview_image = self.nicer.single_image_pass_can(self.reference_img1)
             self.reference_img2 = Image.fromarray(preview_image)
             tk_preview = ImageTk.PhotoImage(self.reference_img2)
+            self.tk_img_panel_two.place(x = self.helper_x, y=self.helper_y)
             self.tk_img_panel_two.image = tk_preview
             self.tk_img_panel_two.configure(image=tk_preview)
         else:
