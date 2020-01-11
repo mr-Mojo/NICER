@@ -122,7 +122,7 @@ def loss_with_l2_regularization(nima_result, filters, gamma=config.gamma, initia
         filter_deviations_from_initial = sum([(filters[x].item() - initial_filters[x]) ** 2 for x in range(len(filters))])  # l2: sum the deviation from user preset
         l2_term = filter_deviations_from_initial
         print("\nInitial Filters:", initial_filters)
-        print("Current Filters:", filters)
+        print("Current Filters:", [filters[x].item() for x in range(8)])
         print("Deviation from Initial:",filter_deviations_from_initial)
         print("L2 Term:",l2_term)
     else:

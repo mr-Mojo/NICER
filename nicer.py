@@ -122,6 +122,7 @@ class NICER(nn.Module):
                 loss = loss_with_l2_regularization(distribution.cpu(), self.filters.cpu())      # re-init True, i.e. new for each image
                 losses.append(loss.item())
             else:
+                filters_plot[i] = [self.filters[x].item() for x in range(8)]
                 loss = loss_with_l2_regularization(distribution.cpu(), self.filters.cpu(), initial_filters=user_preset_filters)       # TODO: test, and gamma too
                 losses.append(loss.item())
             loss.backward()

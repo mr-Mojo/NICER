@@ -26,6 +26,7 @@ class NicerGui:
         # keep references to the images for further processing, bc tk.PhotoImage cannot be converted back
         self.reference_img1 = None
         self.reference_img2 = None
+        self.reference_img1_fullSize = None
         self.img_namestring = None
         self.img_extension = None
         self.helper_x = None
@@ -132,6 +133,9 @@ class NicerGui:
     def open_image(self):
         filepath = filedialog.askopenfilename(initialdir = os.getcwd(), title = "Select an image to open",
                                    filetypes = (("jpg files","*.jpg"),("png files","*.png"),("all files","*.*")))
+
+        if filepath is None: return
+
         if filepath.split('.')[-1] in config.supported_extensions:
 
             self.img_namestring = filepath.split('.')[0]
@@ -140,6 +144,14 @@ class NicerGui:
             pil_img = Image.open(filepath)
             img_width = pil_img.size[0]
             img_height = pil_img.size[1]
+
+            # dirty hack to avoid errors when image is a square:
+            if img_width == img_height:
+                pil_img = pil_img.resize((img_width, img_height-1))
+                img_width = pil_img.size[0]
+                img_height = pil_img.size[1]
+
+            self.reference_img1_fullSize = pil_img
 
             # resize images so that they can fit next to each other:
 
@@ -178,9 +190,6 @@ class NicerGui:
                         print("reduced factor to %f" % factor)
                         new_img_width = int(img_width * factor)
                         new_img_height = int(img_height * factor)
-                else:
-                   pass
-                # TODO: square images?
 
                 # img is now resized in a way for 2 images to fit next to each other
                 pil_img = pil_img.resize((new_img_width, new_img_height))
@@ -231,13 +240,37 @@ class NicerGui:
             return None
 
 
-    def save_image(self):       # TODO: aktuell wird immmer nur die kleine Kopie gespeichert, wende CAN auf großes Bild an und speichere das
+    def save_image(self):
         if self.tk_img_panel_two.winfo_ismapped() and self.slider_variables:
             filepath = filedialog.asksaveasfilename(initialdir = os.getcwd(), title = "Save the edited image",
                                                        filetypes = (("jpeg files","*.jpg"),("all files","*.*")))
             if len(filepath.split('.')) == 1:
                 filepath += '.jpg'
-            self.reference_img2.save(filepath)
+
+            current_filer_values, current_gamma = self.get_all_slider_values()
+            self.nicer.set_filters(current_filer_values)
+            self.nicer.set_gamma(current_gamma)
+
+            # calc factor for resizing to 1080p
+            width, height = self.reference_img1_fullSize.size
+            if width > 1080 or height > 1080:
+                print("resize")
+                if height > width:
+                    factor = 1080.0 / height
+                else:
+                    factor = 1080.0 / width
+
+                width = int(width*factor)
+                height = int(height*factor)
+
+                hd_image = self.nicer.single_image_pass_can(self.reference_img1_fullSize.resize((width,height)))
+                hd_image_pil = Image.fromarray(hd_image)
+            else:
+                # dims < 1080 longest side, no resizing
+                hd_image = self.nicer.single_image_pass_can(self.reference_img2)
+                hd_image_pil = Image.fromarray(hd_image)
+
+            hd_image_pil.save(filepath)
             self.print_label['text'] = 'Image saved sucessfully!'
         else:
             self.print_label['text'] = 'Load and edit an image first!'
@@ -257,6 +290,8 @@ class NicerGui:
             current_filer_values, current_gamma = self.get_all_slider_values()
             self.nicer.set_filters(current_filer_values)
             self.nicer.set_gamma(current_gamma)
+            print(self.reference_img1.size)
+            print(self.reference_img1_fullSize.size)
             preview_image = self.nicer.single_image_pass_can(self.reference_img1)
             self.reference_img2 = Image.fromarray(preview_image)
             self.display_img_two()
@@ -290,7 +325,17 @@ class NicerGui:
             self.nicer.set_filters(slider_vals)
             self.nicer.set_gamma(gamma)
 
-            enhanced_img, img_score_initial, img_score_final = self.nicer.enhance_image(self.reference_img1, re_init=False, rescale_to_hd=True, verbose=True)
+            custom_filters = False
+            for value in slider_vals:
+                if value != 0.0: custom_filters = True
+
+            if not custom_filters:
+                print("Using standard filters")
+                enhanced_img, img_score_initial, img_score_final = self.nicer.enhance_image(self.reference_img1, re_init=True, rescale_to_hd=True, verbose=True)
+            else:
+                print("Using custom filters")
+                enhanced_img, img_score_initial, img_score_final = self.nicer.enhance_image(self.reference_img1, re_init=False, rescale_to_hd=True, verbose=True)
+
             enhanced_img_pil = Image.fromarray(enhanced_img)
             self.reference_img2 = enhanced_img_pil
             self.display_img_two()
