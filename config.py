@@ -19,6 +19,7 @@ final_size = 1080
 supported_extensions = ['jpg', 'png']
 supported_extensions_raw = ['dng']
 
-
 # ----- GUI parameters:
 
+plot_filter_intensities = False
+verbosity = 2

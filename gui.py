@@ -4,7 +4,7 @@ import numpy as np
 from PIL import Image, ImageTk
 import os
 import config
-from nicer import NICER
+from nicer import NICER, print_msg
 import tkinter as tk
 from tkinter.ttk import Label, Button
 
@@ -153,6 +153,8 @@ class NicerGui:
 
             self.reference_img1_fullSize = pil_img
 
+            print_msg("Full image size: {}x{}".format(img_width, img_height), 3)
+
             # resize images so that they can fit next to each other:
 
             # margins of the display canvas: 0.6*windowwidth, 0.9*windowheight
@@ -180,14 +182,14 @@ class NicerGui:
                 if img_width > img_height and new_img_height > max_height:      # landscape format
                     while new_img_height > max_height:
                         factor *= 0.99
-                        print("reduced factor to %f" % factor)
+                        print_msg("reduced factor to %f" % factor, 3)
                         new_img_width = int(img_width * factor)
                         new_img_height = int(img_height * factor)
 
                 elif img_height > img_width and new_img_width > max_width:      # portrait format
                     while new_img_width > max_width:
                         factor *= 0.99
-                        print("reduced factor to %f" % factor)
+                        print_msg("reduced factor to %f" % factor, 3)
                         new_img_width = int(img_width * factor)
                         new_img_height = int(img_height * factor)
 
@@ -198,6 +200,7 @@ class NicerGui:
             tkImage = ImageTk.PhotoImage(pil_img)
             self.tk_img_panel_one.image = tkImage
             self.tk_img_panel_one.configure(image=tkImage)
+            print_msg("Display image size: {}x{}".format(new_img_width, new_img_height), 3)
 
             pil_img_dummy = Image.new('RGB', (new_img_width, new_img_height), (200, 200, 200))
             tkImage_dummy = ImageTk.PhotoImage(pil_img_dummy)
@@ -254,7 +257,7 @@ class NicerGui:
             # calc factor for resizing to 1080p
             width, height = self.reference_img1_fullSize.size
             if width > 1080 or height > 1080:
-                print("resize")
+                print_msg("Resizing to 1080p before saving", 3)
                 if height > width:
                     factor = 1080.0 / height
                 else:
@@ -290,8 +293,6 @@ class NicerGui:
             current_filer_values, current_gamma = self.get_all_slider_values()
             self.nicer.set_filters(current_filer_values)
             self.nicer.set_gamma(current_gamma)
-            print(self.reference_img1.size)
-            print(self.reference_img1_fullSize.size)
             preview_image = self.nicer.single_image_pass_can(self.reference_img1)
             self.reference_img2 = Image.fromarray(preview_image)
             self.display_img_two()
@@ -306,7 +307,7 @@ class NicerGui:
 
     def get_all_slider_values(self):
         values = [var.get()/100.0 for var in self.slider_variables]
-        print(values, self.gamma.get())
+        print(values, self.gamma.get())         # debug
         return values, self.gamma.get()
 
     def set_all_image_filter_sliders(self, valueList):
@@ -330,11 +331,11 @@ class NicerGui:
                 if value != 0.0: custom_filters = True
 
             if not custom_filters:
-                print("Using standard filters")
-                enhanced_img, img_score_initial, img_score_final = self.nicer.enhance_image(self.reference_img1, re_init=True, rescale_to_hd=True, verbose=True)
+                print_msg("All filters are zero.", 2)
+                enhanced_img, img_score_initial, img_score_final = self.nicer.enhance_image(self.reference_img1, re_init=True, rescale_to_hd=True)
             else:
-                print("Using custom filters")
-                enhanced_img, img_score_initial, img_score_final = self.nicer.enhance_image(self.reference_img1, re_init=False, rescale_to_hd=True, verbose=True)
+                print_msg("Using user-defined filter preset", 2)
+                enhanced_img, img_score_initial, img_score_final = self.nicer.enhance_image(self.reference_img1, re_init=False, rescale_to_hd=True)
 
             enhanced_img_pil = Image.fromarray(enhanced_img)
             self.reference_img2 = enhanced_img_pil
@@ -343,7 +344,6 @@ class NicerGui:
             new_filters = [self.nicer.filters[x].item()*100 for x in range(8)]
             self.set_all_image_filter_sliders(new_filters)
 
-            print(new_filters)
         else:
             self.print_label['text'] = "Load image first."
 

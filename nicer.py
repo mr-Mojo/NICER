@@ -2,6 +2,8 @@ from imports import *
 from utils import *
 from neural_models import *
 
+
+
 class NICER(nn.Module):
 
     def __init__(self, checkpoint_can, checkpoint_nima, device='cpu', can_arch=8):
@@ -25,13 +27,15 @@ class NICER(nn.Module):
         self.filters = torch.tensor([0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0], dtype=torch.float32, requires_grad=True, device=device)
         self.can = can
         self.nima = nima
+        self.gamma = config.gamma
+
         if config.optim == 'sgd':
             self.optimizer = torch.optim.SGD(params=[self.filters], lr=config.optim_lr, momentum=config.optim_momentum)
         elif config.optim == 'adam':
             self.optimizer = torch.optim.Adam(params=[self.filters], lr=config.optim_lr)
         else:
             error_callback('optimizer')
-        self.gamma = config.gamma
+
 
     def forward(self, image):
         filter_tensor = torch.zeros((8, 224, 224), dtype=torch.float32).to(self.device)
@@ -48,16 +52,16 @@ class NICER(nn.Module):
         with torch.no_grad():
             for i in range(5):
                 self.filters[i] = filter_list[i]
-            self.filters[7] = filter_list[5]    # exposure is in 5 filterlist but 7 in can
-            self.filters[5] = filter_list[6]    # llf is 6 in filterlist but 5 in can
-            self.filters[6] = filter_list[7]    # nld is 7 in filterlist but 6 in can
+            self.filters[7] = filter_list[5]  # exposure is in 5 filterlist but 7 in can
+            self.filters[5] = filter_list[6]  # llf is 6 in filterlist but 5 in can
+            self.filters[6] = filter_list[7]  # nld is 7 in filterlist but 6 in can
 
     def set_gamma(self, gamma):
         config.gamma = gamma
         self.gamma = gamma
 
     def single_image_pass_can(self, image):
-        image_tensor = transforms.ToTensor()(image)        # gets called from gui, with a non-tensor image
+        image_tensor = transforms.ToTensor()(image)  # gets called from gui, with a non-tensor image
         filter_tensor = torch.zeros((8, image.size[1], image.size[0]), dtype=torch.float32).to(self.device)
         for l in range(8):
             filter_tensor[l, :, :] = self.filters.view(-1)[l]  # construct filtermap uniformly from given filters
@@ -80,11 +84,10 @@ class NICER(nn.Module):
         else:
             error_callback('optimizer')
 
-    # returns enhanced image as np array
-    def enhance_image(self, image_path, re_init=True, rescale_to_hd=True, verbose=False):        # accepts image_path as string, but also as PIL image object
+    def enhance_image(self, image_path, re_init=True, rescale_to_hd=True):  # accepts image_path as string, but also as PIL image object
 
         if re_init:
-            self.re_init()      # not called from NICER button, but from batch mode in optimize_whole_folder -> new filters for each image run
+            self.re_init()  # not called from NICER button, but from batch mode in optimize_whole_folder -> new filters for each image run
         else:
             user_preset_filters = [self.filters[x].item() for x in range(8)]
         # re-init can be seen as test whether initial filter values (!= 0) should be used or not during optimization
@@ -94,7 +97,6 @@ class NICER(nn.Module):
         else:
             pil_image = image_path
 
-        print("test")
         image_tensor_transformed = nima_transform(pil_image)
         image_tensor_transformed_batched = image_tensor_transformed.unsqueeze(dim=0)
 
@@ -107,74 +109,30 @@ class NICER(nn.Module):
         epochs = config.epochs
         losses = []
 
-        filters_plot = {}
+        filters_for_plot = {}
 
         # optimize image:
-        print("Starting optimization")
+        print_msg("Starting optimization", 2)
         start_time = time.time()
         for i in range(epochs):
-            if verbose:
-                print("Iteration {} of {}".format(i, epochs))
+            print_msg("Iteration {} of {}".format(i, epochs), 1)
             distribution, enhanced_img = self.forward(image_tensor_transformed)
             self.optimizer.zero_grad()
             if re_init:
-                filters_plot[i] = [self.filters[x].item() for x in range(8)]
-                loss = loss_with_l2_regularization(distribution.cpu(), self.filters.cpu())      # re-init True, i.e. new for each image
+                filters_for_plot[i] = [self.filters[x].item() for x in range(8)]
+                loss = loss_with_l2_regularization(distribution.cpu(), self.filters.cpu())  # re-init True, i.e. new for each image
                 losses.append(loss.item())
             else:
-                filters_plot[i] = [self.filters[x].item() for x in range(8)]
-                loss = loss_with_l2_regularization(distribution.cpu(), self.filters.cpu(), initial_filters=user_preset_filters)       # TODO: test, and gamma too
+                filters_for_plot[i] = [self.filters[x].item() for x in range(8)]
+                loss = loss_with_l2_regularization(distribution.cpu(), self.filters.cpu(), initial_filters=user_preset_filters)  # TODO: test, and gamma too
                 losses.append(loss.item())
             loss.backward()
             self.optimizer.step()
-        print("Optimization for %d epochs took %.3fs" % (epochs, time.time() - start_time))
 
-        import matplotlib.pyplot as plt
-        from scipy.interpolate import make_interp_spline, BSpline
+        print_msg("Optimization for %d epochs took %.3fs" % (epochs, time.time() - start_time), 2)
 
-        x_e = np.arange(1,config.epochs+1)
-        x = np.linspace(1,config.epochs+1,500).tolist()
-        sat, con, bri, sha, hig, llf, exp, nld = [], [], [], [], [], [], [], []
-
-        for key, val in filters_plot.items():
-            sat.append(val[0])
-            con.append(val[1])
-            bri.append(val[2])
-            sha.append(val[3])
-            hig.append(val[4])
-            llf.append(val[5])
-            nld.append(val[6])
-            exp.append(val[7])
-
-        spl0 = make_interp_spline(x_e, sat, k=3)  # type BSpline
-        spl1 = make_interp_spline(x_e, con, k=3)  # type BSpline
-        spl2 = make_interp_spline(x_e, bri, k=3)  # type BSpline
-        spl3 = make_interp_spline(x_e, sha, k=3)  # type BSpline
-        spl4 = make_interp_spline(x_e, hig, k=3)  # type BSpline
-        spl5 = make_interp_spline(x_e, llf, k=3)  # type BSpline
-        spl6 = make_interp_spline(x_e, nld, k=3)  # type BSpline
-        spl7 = make_interp_spline(x_e, exp, k=3)  # type BSpline
-
-        a = spl0(x)
-        b = spl1(x)
-        c = spl2(x)
-        d = spl3(x)
-        e = spl4(x)
-        f = spl5(x)
-        g = spl6(x)
-        h = spl7(x)
-
-        h0 = plt.plot(x, a)
-        h1 = plt.plot(x, b)
-        h2 = plt.plot(x, c)
-        h3 = plt.plot(x, d)
-        h4 = plt.plot(x, e)
-        h5 = plt.plot(x, f)
-        h6 = plt.plot(x, g)
-        h7 = plt.plot(x, h)
-
-        plt.legend((h0[0], h1[0], h2[0], h3[0],h4[0],h5[0],h6[0],h7[0]), ('sat','con','bri','sha','hig','llf','nld','exp'))
-        plt.show() # debug
+        if config.plot_filter_intensities:
+            plot_filter_intensities(filters_for_plot)
 
         if rescale_to_hd:
             if pil_image.size[0] > config.final_size or pil_image.size[1] > config.final_size:
@@ -221,7 +179,7 @@ class NICER(nn.Module):
         for idx, img_name in enumerate(os.listdir(folder_path)):
             extension = img_name.split('.')[-1]
             if extension not in config.supported_extensions: continue
-            print("Working on image {} of {}".format(idx, len(os.listdir(folder_path))))
+            print_msg("Working on image {} of {}".format(idx, len(os.listdir(folder_path))), 2)
 
             enhanced_img, init_nima, final_nima = self.enhance_image(os.path.join(folder_path, img_name))
 
@@ -232,4 +190,58 @@ class NICER(nn.Module):
             results[img_name] = (init_nima, final_nima, self.filters.tolist())
 
         json.dump(results, open(os.path.join(folder_path, 'results', "results.json"), 'w'))
-        print("Saved results. Finished.")
+        print_msg("Saved results. Finished.", 1)
+
+
+def print_msg(message, level):
+    if level <= config.verbosity:
+        print(message)
+
+def plot_filter_intensities(intensities_for_plot):
+    import matplotlib.pyplot as plt
+    from scipy.interpolate import make_interp_spline
+    x_e = np.arange(1, config.epochs + 1)
+    x = np.linspace(1, config.epochs + 1, 500).tolist()
+    sat, con, bri, sha, hig, llf, exp, nld = [], [], [], [], [], [], [], []
+
+    for key, val in intensities_for_plot.items():
+        sat.append(val[0])
+        con.append(val[1])
+        bri.append(val[2])
+        sha.append(val[3])
+        hig.append(val[4])
+        llf.append(val[5])
+        nld.append(val[6])
+        exp.append(val[7])
+
+    spl0 = make_interp_spline(x_e, sat, k=3)  # type BSpline
+    spl1 = make_interp_spline(x_e, con, k=3)  # type BSpline
+    spl2 = make_interp_spline(x_e, bri, k=3)  # type BSpline
+    spl3 = make_interp_spline(x_e, sha, k=3)  # type BSpline
+    spl4 = make_interp_spline(x_e, hig, k=3)  # type BSpline
+    spl5 = make_interp_spline(x_e, llf, k=3)  # type BSpline
+    spl6 = make_interp_spline(x_e, nld, k=3)  # type BSpline
+    spl7 = make_interp_spline(x_e, exp, k=3)  # type BSpline
+
+    a = spl0(x)
+    b = spl1(x)
+    c = spl2(x)
+    d = spl3(x)
+    e = spl4(x)
+    f = spl5(x)
+    g = spl6(x)
+    h = spl7(x)
+
+    h0 = plt.plot(x, a)
+    h1 = plt.plot(x, b)
+    h2 = plt.plot(x, c)
+    h3 = plt.plot(x, d)
+    h4 = plt.plot(x, e)
+    h5 = plt.plot(x, f)
+    h6 = plt.plot(x, g)
+    h7 = plt.plot(x, h)
+
+    plt.legend((h0[0], h1[0], h2[0], h3[0], h4[0], h5[0], h6[0], h7[0]), ('sat', 'con', 'bri', 'sha', 'hig', 'llf', 'nld', 'exp'))
+    plt.show()
+
+    # returns enhanced image as np array
