@@ -119,7 +119,7 @@ class NicerGui:
             self.save_button = Button(master, text="Save Image", command=self.save_image)
             self.reset_button = Button(master, text="Reset", command=self.reset_all)
             self.preview_button = Button(master, text="Preview", command=self.preview)
-            self.nicer_button = Button(master, text="NICER!", command=self.get_all_slider_values)
+            self.nicer_button = Button(master, text="NICER!", command=self.nicer_enhance)
 
             screen_center = int(self.width/2.0)
             button_y = 50+6*space+gamma_space + 50
@@ -245,7 +245,7 @@ class NicerGui:
     def reset_all(self):
         for slider in self.sliders:
             slider.set(0)
-        self.gamma_slider.set(0.01)
+        self.gamma_slider.set(0.100)
         for variable in self.slider_variables:
             variable.set(0)
         #self.tk_img_panel_one.place_forget()       # leave the current image, reset only filters and edited img
@@ -259,23 +259,48 @@ class NicerGui:
             self.nicer.set_gamma(current_gamma)
             preview_image = self.nicer.single_image_pass_can(self.reference_img1)
             self.reference_img2 = Image.fromarray(preview_image)
-            tk_preview = ImageTk.PhotoImage(self.reference_img2)
-            self.tk_img_panel_two.place(x = self.helper_x, y=self.helper_y)
-            self.tk_img_panel_two.image = tk_preview
-            self.tk_img_panel_two.configure(image=tk_preview)
+            self.display_img_two()
         else:
             self.print_label['text'] = "Load image first."
+
+    def display_img_two(self):
+        tk_preview = ImageTk.PhotoImage(self.reference_img2)
+        self.tk_img_panel_two.place(x=self.helper_x, y=self.helper_y)
+        self.tk_img_panel_two.image = tk_preview
+        self.tk_img_panel_two.configure(image=tk_preview)
 
     def get_all_slider_values(self):
         values = [var.get()/100.0 for var in self.slider_variables]
         print(values, self.gamma.get())
         return values, self.gamma.get()
 
-    def nicer(self):
-        # todo: get filter values from sliders
-        # set them as current standard
-        # optimize image with l2 loss that takes new 0 point (user preset) into account
-        print("nicer")
+    def set_all_image_filter_sliders(self, valueList):
+        # does not set gamma. called by nicer_enhance routine to display final outcome of enhancement
+        for i in range(len(valueList)):
+            self.sliders[i].set(valueList[i])
+            self.slider_variables[i].set(valueList[i])
+
+    def nicer_enhance(self):
+        # check if image is yet available, else do nothing
+        if self.tk_img_panel_one.winfo_ismapped():
+
+            self.nicer.re_init()    # reset all old values before enhancing
+
+            slider_vals, gamma = self.get_all_slider_values()       # get values from sliders and set
+            self.nicer.set_filters(slider_vals)
+            self.nicer.set_gamma(gamma)
+
+            enhanced_img, img_score_initial, img_score_final = self.nicer.enhance_image(self.reference_img1, re_init=False, rescale_to_hd=True, verbose=True)
+            enhanced_img_pil = Image.fromarray(enhanced_img)
+            self.reference_img2 = enhanced_img_pil
+            self.display_img_two()
+
+            new_filters = [self.nicer.filters[x].item()*100 for x in range(8)]
+            self.set_all_image_filter_sliders(new_filters)
+
+            print(new_filters)
+        else:
+            self.print_label['text'] = "Load image first."
 
 
 if __name__ == '__main__':

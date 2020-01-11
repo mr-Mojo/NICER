@@ -25,7 +25,12 @@ class NICER(nn.Module):
         self.filters = torch.tensor([0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0], dtype=torch.float32, requires_grad=True, device=device)
         self.can = can
         self.nima = nima
-        self.optimizer = torch.optim.SGD(params=[self.filters], lr=config.optim_lr, momentum=config.optim_momentum)
+        if config.optim == 'sgd':
+            self.optimizer = torch.optim.SGD(params=[self.filters], lr=config.optim_lr, momentum=config.optim_momentum)
+        elif config.optim == 'adam':
+            self.optimizer = torch.optim.Adam(params=[self.filters], lr=config.optim_lr)
+        else:
+            error_callback('optimizer')
         self.gamma = config.gamma
 
     def forward(self, image):
@@ -40,11 +45,12 @@ class NICER(nn.Module):
         return distr_of_ratings, enhanced_img
 
     def set_filters(self, filter_list):
-        for i in range(5):
-            self.filters[i] = filter_list[i]
-        self.filters[7] = filter_list[5]    # exposure is in 5 filterlist but 7 in can
-        self.filters[5] = filter_list[6]    # llf is 6 in filterlist but 5 in can
-        self.filters[6] = filter_list[7]    # nld is 7 in filterlist but 6 in can
+        with torch.no_grad():
+            for i in range(5):
+                self.filters[i] = filter_list[i]
+            self.filters[7] = filter_list[5]    # exposure is in 5 filterlist but 7 in can
+            self.filters[5] = filter_list[6]    # llf is 6 in filterlist but 5 in can
+            self.filters[6] = filter_list[7]    # nld is 7 in filterlist but 6 in can
 
     def set_gamma(self, gamma):
         config.gamma = gamma
@@ -65,15 +71,30 @@ class NICER(nn.Module):
         enhanced_clipped = enhanced_clipped.astype('uint8')
         return enhanced_clipped
 
-
     def re_init(self):
         self.filters = torch.tensor([0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0], dtype=torch.float32, requires_grad=True, device=self.device)
-        self.optimizer = torch.optim.SGD(params=[self.filters], lr=config.optim_lr, momentum=config.optim_momentum)
+        if config.optim == 'sgd':
+            self.optimizer = torch.optim.SGD(params=[self.filters], lr=config.optim_lr, momentum=config.optim_momentum)
+        elif config.optim == 'adam':
+            self.optimizer = torch.optim.Adam(params=[self.filters], lr=config.optim_lr)
+        else:
+            error_callback('optimizer')
 
-    def enhance_image(self, image_path, rescale_to_hd=True):
-        self.re_init()
+    # returns enhanced image as np array
+    def enhance_image(self, image_path, re_init=True, rescale_to_hd=True, verbose=False):        # accepts image_path as string, but also as PIL image object
 
-        pil_image = load_pil_img(image_path)
+        if re_init:
+            self.re_init()      # not called from NICER button, but from batch mode in optimize_whole_folder -> new filters for each image run
+        else:
+            user_preset_filters = [self.filters[x].item() for x in range(8)]
+        # re-init can be seen as test whether initial filter values (!= 0) should be used or not during optimization
+
+        if isinstance(image_path, str):
+            pil_image = load_pil_img(image_path)
+        else:
+            pil_image = image_path
+
+        print("test")
         image_tensor_transformed = nima_transform(pil_image)
         image_tensor_transformed_batched = image_tensor_transformed.unsqueeze(dim=0)
 
@@ -84,24 +105,83 @@ class NICER(nn.Module):
 
         nima_offset = initial_nima_score - initial_nima_score_after_first_pass
         epochs = config.epochs
+        losses = []
+
+        filters_plot = {}
 
         # optimize image:
         print("Starting optimization")
         start_time = time.time()
         for i in range(epochs):
+            if verbose:
+                print("Iteration {} of {}".format(i, epochs))
             distribution, enhanced_img = self.forward(image_tensor_transformed)
             self.optimizer.zero_grad()
-            loss = loss_with_l2_regularization(distribution.cpu(), self.filters.cpu())
+            if re_init:
+                filters_plot[i] = [self.filters[x].item() for x in range(8)]
+                loss = loss_with_l2_regularization(distribution.cpu(), self.filters.cpu())      # re-init True, i.e. new for each image
+                losses.append(loss.item())
+            else:
+                loss = loss_with_l2_regularization(distribution.cpu(), self.filters.cpu(), initial_filters=user_preset_filters)       # TODO: test, and gamma too
+                losses.append(loss.item())
             loss.backward()
             self.optimizer.step()
         print("Optimization for %d epochs took %.3fs" % (epochs, time.time() - start_time))
 
+        import matplotlib.pyplot as plt
+        from scipy.interpolate import make_interp_spline, BSpline
+
+        x_e = np.arange(1,config.epochs+1)
+        x = np.linspace(1,config.epochs+1,500).tolist()
+        sat, con, bri, sha, hig, llf, exp, nld = [], [], [], [], [], [], [], []
+
+        for key, val in filters_plot.items():
+            sat.append(val[0])
+            con.append(val[1])
+            bri.append(val[2])
+            sha.append(val[3])
+            hig.append(val[4])
+            llf.append(val[5])
+            nld.append(val[6])
+            exp.append(val[7])
+
+        spl0 = make_interp_spline(x_e, sat, k=3)  # type BSpline
+        spl1 = make_interp_spline(x_e, con, k=3)  # type BSpline
+        spl2 = make_interp_spline(x_e, bri, k=3)  # type BSpline
+        spl3 = make_interp_spline(x_e, sha, k=3)  # type BSpline
+        spl4 = make_interp_spline(x_e, hig, k=3)  # type BSpline
+        spl5 = make_interp_spline(x_e, llf, k=3)  # type BSpline
+        spl6 = make_interp_spline(x_e, nld, k=3)  # type BSpline
+        spl7 = make_interp_spline(x_e, exp, k=3)  # type BSpline
+
+        a = spl0(x)
+        b = spl1(x)
+        c = spl2(x)
+        d = spl3(x)
+        e = spl4(x)
+        f = spl5(x)
+        g = spl6(x)
+        h = spl7(x)
+
+        h0 = plt.plot(x, a)
+        h1 = plt.plot(x, b)
+        h2 = plt.plot(x, c)
+        h3 = plt.plot(x, d)
+        h4 = plt.plot(x, e)
+        h5 = plt.plot(x, f)
+        h6 = plt.plot(x, g)
+        h7 = plt.plot(x, h)
+
+        plt.legend((h0[0], h1[0], h2[0], h3[0],h4[0],h5[0],h6[0],h7[0]), ('sat','con','bri','sha','hig','llf','nld','exp'))
+        plt.show() # debug
+
         if rescale_to_hd:
-            pil_image = Image.open(image_path)
             if pil_image.size[0] > config.final_size or pil_image.size[1] > config.final_size:
                 original_tensor_transformed = hd_transform(pil_image)
             else:
                 original_tensor_transformed = transforms.ToTensor()(pil_image)
+        else:
+            original_tensor_transformed = transforms.ToTensor()(pil_image)
 
         final_filters = torch.zeros((8, original_tensor_transformed.shape[1], original_tensor_transformed.shape[2]), dtype=torch.float32).to(self.device)
         for k in range(8):

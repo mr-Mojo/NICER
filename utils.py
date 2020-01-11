@@ -15,6 +15,8 @@ def error_callback(caller):
         sys.exit("Distribution shapes do not match in EMD loss")
     elif caller is 'filter_length_l2loss':
         sys.exit("Filter lengths do not match.")
+    elif caller is 'optimizer':
+        sys.exit("Illegal optimizer. Use SGD or ADAM.")
 
 
 nima_transform = transforms.Compose([
@@ -109,14 +111,21 @@ def single_emd_loss(p, q, r=2):
     return (emd_loss / length) ** (1. / r)
 
 
-def loss_with_l2_regularization(nima_result, filters, inital_filters=None, gamma=config.gamma):
-    if len(filters) != len(inital_filters): error_callback('filter_length_l2loss')
+def loss_with_l2_regularization(nima_result, filters, gamma=config.gamma, initial_filters=None):
+    if initial_filters is not None:
+        if len(filters) != len(initial_filters): error_callback('filter_length_l2loss')
 
-    desired_distribution = torch.FloatTensor([0.0, 0.0, 0.0, 0.0, 0.0, 0.01, 0.09, 0.15, 0.55, 0.20]).view((-1, 10))
+    desired_distribution = torch.FloatTensor(config.desired_distribution).view((-1, 10))
     distance_term = sum(single_emd_loss(desired_distribution, nima_result))
-    if inital_filters == None:
-        l2_term = sum([fil**2 for fil in filters])                      # l2: sum the squares of all filters
-    else:
-        filter_deviations_from_initial = sum([(filters[x]-inital_filters[x])**2 for x in range(len(filters))])      # l2: sum the deviation from user preset
+
+    if initial_filters is not None:
+        filter_deviations_from_initial = sum([(filters[x].item() - initial_filters[x]) ** 2 for x in range(len(filters))])  # l2: sum the deviation from user preset
         l2_term = filter_deviations_from_initial
+        print("\nInitial Filters:", initial_filters)
+        print("Current Filters:", filters)
+        print("Deviation from Initial:",filter_deviations_from_initial)
+        print("L2 Term:",l2_term)
+    else:
+        l2_term = sum([fil**2 for fil in filters])                      # l2: sum the squares of all filters
+
     return distance_term + gamma*l2_term

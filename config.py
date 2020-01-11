@@ -7,9 +7,11 @@ nima_checkpoint_path = 'models/nima_vgg_bright2.pkl'
 
 gamma = 0.1
 epochs = 100
+optim = 'adam'
 optim_lr = 0.05
 optim_momentum = 0.9
 
+desired_distribution = [0.0, 0.0, 0.0, 0.0, 0.0, 0.01, 0.09, 0.15, 0.55, 0.20]
 
 # ----- image parameters:
 
