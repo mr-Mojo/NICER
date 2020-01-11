@@ -6,3 +6,6 @@ Developed during the course of the Master's Thesis "Using Neural Networks as a M
 
 More readme to come soon. 
 
+
+TODO: 
+take out personal images, replace with others and also put an _edited version in
