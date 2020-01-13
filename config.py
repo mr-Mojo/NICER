@@ -6,7 +6,7 @@ can_checkpoint_path = 'models/can_exp9_final.pt'
 nima_checkpoint_path = 'models/nima_vgg_bright2.pkl'
 
 gamma = 0.1
-epochs = 10
+epochs = 100
 optim = 'sgd'
 optim_lr = 0.05
 optim_momentum = 0.9
@@ -22,4 +22,4 @@ supported_extensions_raw = ['dng']
 # ----- GUI parameters:
 
 plot_filter_intensities = False
-verbosity = 2
+verbosity = 1

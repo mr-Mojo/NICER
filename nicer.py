@@ -10,6 +10,12 @@ class NICER(nn.Module):
         super(NICER, self).__init__()
         self.device = device
 
+        running_in_container = True if os.environ.get('RUNNING_IN_CONTAINER') else False
+        if running_in_container:
+            os.environ['TORCH_HOME'] = '/repo/models'
+            checkpoint_can = '/repo/NICER/' + checkpoint_can
+            checkpoint_nima = '/repo/NICER/' + checkpoint_nima
+
         if can_arch != 8 and can_arch != 7:
             error_callback('can_arch')
 
@@ -41,7 +47,7 @@ class NICER(nn.Module):
         filter_tensor = torch.zeros((8, 224, 224), dtype=torch.float32).to(self.device)
         for l in range(8):
             filter_tensor[l, :, :] = self.filters.view(-1)[l]  # construct filtermap uniformly from given filters
-        mapped_img = torch.cat((image, filter_tensor), dim=0).unsqueeze(dim=0)  # concat filters and img
+        mapped_img = torch.cat((image, filter_tensor.cpu()), dim=0).unsqueeze(dim=0).to(self.device)  # concat filters and img
 
         enhanced_img = self.can(mapped_img)  # enhance img with CAN
         distr_of_ratings = self.nima(enhanced_img)  # get nima score distribution -> tensor
@@ -84,6 +90,7 @@ class NICER(nn.Module):
         else:
             error_callback('optimizer')
 
+    #  TODO: autobright automatisch aufrufen???
     def enhance_image(self, image_path, re_init=True, rescale_to_hd=True):  # accepts image_path as string, but also as PIL image object
 
         if re_init:
@@ -98,7 +105,7 @@ class NICER(nn.Module):
             pil_image = image_path
 
         image_tensor_transformed = nima_transform(pil_image)
-        image_tensor_transformed_batched = image_tensor_transformed.unsqueeze(dim=0)
+        image_tensor_transformed_batched = image_tensor_transformed.unsqueeze(dim=0).to(self.device)
 
         with torch.no_grad():
             initial_nima_score = get_tensor_mean_as_float(self.nima(image_tensor_transformed_batched))
@@ -115,7 +122,7 @@ class NICER(nn.Module):
         print_msg("Starting optimization", 2)
         start_time = time.time()
         for i in range(epochs):
-            print_msg("Iteration {} of {}".format(i, epochs), 1)
+            print_msg("Iteration {} of {}".format(i, epochs), 2)
             distribution, enhanced_img = self.forward(image_tensor_transformed)
             self.optimizer.zero_grad()
             if re_init:
@@ -179,7 +186,7 @@ class NICER(nn.Module):
         for idx, img_name in enumerate(os.listdir(folder_path)):
             extension = img_name.split('.')[-1]
             if extension not in config.supported_extensions: continue
-            print_msg("Working on image {} of {}".format(idx, len(os.listdir(folder_path))), 2)
+            print_msg("Working on image {} of {}".format(idx, len(os.listdir(folder_path))), 1)
 
             enhanced_img, init_nima, final_nima = self.enhance_image(os.path.join(folder_path, img_name))
 

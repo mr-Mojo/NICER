@@ -230,7 +230,7 @@ def normalize_brightness(img_path, verbose=False):
     # bright_img_np = cv2.cvtColor(bright_img, cv2.COLOR_BGR2RGB)
     # bright_img_final = Image.fromarray(bright_img_np)
 
-    bright_img = cv2.cvtColor(bright_img, cv2.COLOR_BGR2RGB)
+    bright_img = cv2.cvtColor(bright_img, cv2.COLOR_BGR2RGB)        # returns the image in RGB, if you want to use it with opencv again, reconvert to BGR
     return bright_img
 
 
@@ -256,8 +256,10 @@ def correct_image_folder(path, save_corrected=True, verbose=False, resize=False,
     None, but saves all images into /corrected when save_output=True
     """
 
-    for img_name in sorted(os.listdir(path)):
+    for idx, img_name in enumerate(sorted(os.listdir(path))):
         if not img_name.endswith(extension): continue
+
+        print("Normalizing img {} of {}".format(idx,len(os.listdir(path))))
 
         # TODO: refactor resize
         # if resize:
@@ -289,6 +291,7 @@ def correct_image_folder(path, save_corrected=True, verbose=False, resize=False,
             dest = os.path.join(path, 'corrected')
             if not os.path.exists(dest):
                 os.mkdir(dest)
+            bright_img = cv2.cvtColor(bright_img, cv2.COLOR_RGB2BGR)        # retransform 2 BGR because else imgs look weird
             cv2.imwrite(os.path.join(dest, img_name), bright_img)
 
     print("Done.")
