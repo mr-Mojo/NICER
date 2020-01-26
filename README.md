@@ -46,4 +46,6 @@ repeated until converge, yielding the most beautiful version of the image - acco
 <p align="center">
     <img src="https://github.com/mr-Mojo/NICER/blob/master/imgs/pipeline_full.png" width="700" height="550">
 </p>
+
+\
 More readme to come soon. 
