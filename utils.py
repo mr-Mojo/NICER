@@ -1,7 +1,6 @@
 from imports import *
 import config
 
-
 def error_callback(caller):
     if caller in ['mae', 'mse', 'mae_channelwise', 'ssim', 'psnr']:
         sys.exit("Exit - " + caller + " - shapes do not match")
@@ -48,6 +47,10 @@ def get_tensor_mean_as_float(nima_distribution):     # returns a float!
     tensor_result = get_tensor_mean_as_tensor((nima_distribution))
     return tensor_result.item()
 
+
+def print_msg(message, level):
+    if level <= config.verbosity:
+        print(message)
 
 def get_filter_index(filter_name):
     if filter_name == 'sat':
@@ -121,10 +124,10 @@ def loss_with_l2_regularization(nima_result, filters, gamma=config.gamma, initia
     if initial_filters is not None:
         filter_deviations_from_initial = sum([(filters[x].item() - initial_filters[x]) ** 2 for x in range(len(filters))])  # l2: sum the deviation from user preset
         l2_term = filter_deviations_from_initial
-        print("\nInitial Filters:", initial_filters)
-        print("Current Filters:", [filters[x].item() for x in range(8)])
-        print("Deviation from Initial:",filter_deviations_from_initial)
-        print("L2 Term:",l2_term)
+        print_msg("\nInitial Filters: {}".format(initial_filters),3)
+        print_msg("Current Filters: {}".format([filters[x].item() for x in range(8)]), 3)
+        print_msg("Deviation from Initial: {}".format(filter_deviations_from_initial), 3)
+        print_msg("L2 Term: {}".format(l2_term), 3)
     else:
         l2_term = sum([fil**2 for fil in filters])                      # l2: sum the squares of all filters
 

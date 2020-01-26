@@ -312,9 +312,19 @@ class NicerGui:
 
     def set_all_image_filter_sliders(self, valueList):
         # does not set gamma. called by nicer_enhance routine to display final outcome of enhancement
-        for i in range(len(valueList)):
+        for i in range(5):
             self.sliders[i].set(valueList[i])
             self.slider_variables[i].set(valueList[i])
+
+        # valueList is returned by NICER and has format sat-con-bri-sha-hig-llf-nld-exp
+        # sliders is controlled by gui and has format sat-con-bri-sha-hig-exp-llf-nld
+        self.sliders[6].set(valueList[5])
+        self.sliders[7].set(valueList[6])
+        self.sliders[5].set(valueList[7])
+        self.slider_variables[6].set(valueList[5])
+        self.slider_variables[7].set(valueList[6])
+        self.slider_variables[5].set(valueList[7])
+
 
     def nicer_enhance(self):
         # check if image is yet available, else do nothing
