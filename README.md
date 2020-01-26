@@ -43,6 +43,7 @@ the loss is backpropagated towards the combination of filter intensities that cr
 repeated until converge, yielding the most beautiful version of the image - according to the NIMA classifier.  
 
 
-<img src="https://github.com/mr-Mojo/NICER/blob/master/imgs/pipeline_full.png" width="700" height="400">
-
+<p align="center">
+    <img src="https://github.com/mr-Mojo/NICER/blob/master/imgs/pipeline_full.png" width="700" height="550">
+</p>
 More readme to come soon. 
