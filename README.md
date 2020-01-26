@@ -42,7 +42,7 @@ and assigned a beauty-score in the range [0,10], which again is used to calculat
 the loss is backpropagated towards the combination of filter intensities that created the enhanced image. This process is 
 repeated until converge, yielding the most beautiful version of the image - according to the NIMA classifier.  
 
-![Full NICER Pipeline](/images/pipeline_full.png)
+![alt_text](https://github.com/mr-Mojo/NICER/imgs/pipeline_full.png)
 
 
 More readme to come soon. 
