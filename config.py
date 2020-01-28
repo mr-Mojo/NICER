@@ -15,7 +15,7 @@ desired_distribution = [0.0, 0.0, 0.0, 0.0, 0.0, 0.01, 0.09, 0.15, 0.55, 0.20]
 
 # ----- image parameters:
 
-final_size = 1080
+final_size = 1920
 supported_extensions = ['jpg', 'png']
 supported_extensions_raw = ['dng']
 

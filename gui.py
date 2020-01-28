@@ -367,12 +367,3 @@ class NicerGui:
 
         else:
             self.print_label['text'] = "Load image first."
-
-
-if __name__ == '__main__':
-    root = Tk()
-    screen_width = root.winfo_screenwidth()
-    screen_height = root.winfo_screenheight()
-
-    my_gui = NicerGui(root, (screen_width, screen_height))
-    root.mainloop()
