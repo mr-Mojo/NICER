@@ -131,12 +131,17 @@ class NicerGui:
             self.reset_button.place(x=40 + 200, y=button_y+40)
 
     def open_image(self):
+        """
+        opens an image, if the image extension is supported in config.py. Currently supported extensions are jpg, png and dng, although
+        more might work. The image is resized for displaying. A reference for further processing is stored in self.reference_img_fullSize.
+        """
+
         filepath = filedialog.askopenfilename(initialdir = os.getcwd(), title = "Select an image to open",
                                    filetypes = (("jpg files","*.jpg"),("png files","*.png"),("all files","*.*")))
 
         if filepath is None: return
 
-        if filepath.split('.')[-1] in config.supported_extensions:
+        if filepath.split('.')[-1] in config.supported_extensions or filepath.split('.')[-1] in config.supported_extensions_raw:
 
             self.img_namestring = filepath.split('.')[0]
             self.img_extension = filepath.split('.')[-1]
@@ -239,11 +244,15 @@ class NicerGui:
             return pil_img
 
         else:
-            self.print_label['text'] = "No valid image format. Use jpg, png or dng."
+            self.print_label['text'] = "No valid image format. Use a format specified in the config."
             return None
 
-
     def save_image(self):
+        """
+        saves an image, if it has previously been modfied (i.e., if the slider values != 0). For saving, the current slider values are used as
+        CAN input and applied to the full size reference image, which is stored in self.reference_img_1_fullSize
+        """
+
         if self.tk_img_panel_two.winfo_ismapped() and self.slider_variables:
             filepath = filedialog.asksaveasfilename(initialdir = os.getcwd(), title = "Save the edited image",
                                                        filetypes = (("jpeg files","*.jpg"),("all files","*.*")))
@@ -254,14 +263,14 @@ class NicerGui:
             self.nicer.set_filters(current_filer_values)
             self.nicer.set_gamma(current_gamma)
 
-            # calc factor for resizing to 1080p
+            # calc a factor for resizing to config.final_size
             width, height = self.reference_img1_fullSize.size
-            if width > 1080 or height > 1080:
-                print_msg("Resizing to 1080p before saving", 3)
+            if width > config.final_size or height > config.final_size:
+                print_msg("Resizing to {}p before saving".format(str(config.final_size)), 3)
                 if height > width:
-                    factor = 1080.0 / height
+                    factor = config.final_size / height
                 else:
-                    factor = 1080.0 / width
+                    factor = config.final_size / width
 
                 width = int(width*factor)
                 height = int(height*factor)
@@ -269,7 +278,7 @@ class NicerGui:
                 hd_image = self.nicer.single_image_pass_can(self.reference_img1_fullSize.resize((width,height)))
                 hd_image_pil = Image.fromarray(hd_image)
             else:
-                # dims < 1080 longest side, no resizing
+                # dims < config.final_size on the longest side, no resizing
                 hd_image = self.nicer.single_image_pass_can(self.reference_img2)
                 hd_image_pil = Image.fromarray(hd_image)
 
@@ -279,6 +288,7 @@ class NicerGui:
             self.print_label['text'] = 'Load and edit an image first!'
 
     def reset_all(self):
+        """ reset GUI and slider values """
         for slider in self.sliders:
             slider.set(0)
         self.gamma_slider.set(0.100)
@@ -288,6 +298,7 @@ class NicerGui:
         self.tk_img_panel_two.place_forget()
 
     def preview(self):
+        """ apply the currently set slider combination onto the image (using resized img for increased speed) """
         # check if image is yet available, else do nothing
         if self.tk_img_panel_one.winfo_ismapped():
             current_filer_values, current_gamma = self.get_all_slider_values()
