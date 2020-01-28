@@ -1,6 +1,6 @@
 
 # ----- NICER parameters:
-
+#test
 filter_count = 8
 can_checkpoint_path = 'models/can_exp9_final.pt'
 nima_checkpoint_path = 'models/nima_vgg_bright2.pkl'
