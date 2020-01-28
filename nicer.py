@@ -64,7 +64,6 @@ class NICER(nn.Module):
             self.filters[7] = filter_list[5]  # exp is 7 in can but 5 in gui
 
     def set_gamma(self, gamma):
-        config.gamma = gamma
         self.gamma = gamma
 
     def single_image_pass_can(self, image, resize=True, abn=False):
@@ -145,11 +144,11 @@ class NICER(nn.Module):
             self.optimizer.zero_grad()
             if re_init:
                 filters_for_plot[i] = [self.filters[x].item() for x in range(8)]
-                loss = loss_with_l2_regularization(distribution.cpu(), self.filters.cpu())  # re-init True, i.e. new for each image
+                loss = loss_with_l2_regularization(distribution.cpu(), self.filters.cpu(), gamma=self.gamma)  # re-init True, i.e. new for each image
                 losses.append(loss.item())
             else:
                 filters_for_plot[i] = [self.filters[x].item() for x in range(8)]
-                loss = loss_with_l2_regularization(distribution.cpu(), self.filters.cpu(), initial_filters=user_preset_filters)  # TODO: test, and gamma too
+                loss = loss_with_l2_regularization(distribution.cpu(), self.filters.cpu(), initial_filters=user_preset_filters, gamma=self.gamma)  # TODO: test, and gamma too
                 losses.append(loss.item())
             loss.backward()
             self.optimizer.step()
