@@ -1,9 +1,0 @@
-<?xml version="1.0" encoding="UTF-8"?>
-<project version="4">
-  <component name="ProjectModuleManager">
-    <modules>
-      <module fileurl="file://$PROJECT_DIR$/.idea/NICER.iml" filepath="$PROJECT_DIR$/.idea/NICER.iml" />
-      <module fileurl="file://$PROJECT_DIR$/../custom_nima/.idea/custom_nima.iml" filepath="$PROJECT_DIR$/../custom_nima/.idea/custom_nima.iml" />
-    </modules>
-  </component>
-</project>
