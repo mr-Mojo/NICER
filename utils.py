@@ -25,7 +25,7 @@ nima_transform = transforms.Compose([
 
 
 hd_transform = transforms.Compose([     # use before saving the big image, to avoid out of memory errors
-    transforms.Resize(1080),
+    transforms.Resize(config.final_size),       # smaller edge will be matched to this
     transforms.ToTensor()
 ])
 
@@ -132,3 +132,7 @@ def loss_with_l2_regularization(nima_result, filters, gamma=config.gamma, initia
         l2_term = sum([fil**2 for fil in filters])                      # l2: sum the squares of all filters
 
     return distance_term + gamma*l2_term
+
+
+def read_raw_img_into_tensor(path, size=None):
+    pass

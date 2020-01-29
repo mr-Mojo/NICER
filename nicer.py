@@ -2,6 +2,7 @@ from imports import *
 from utils import *
 from neural_models import *
 from autobright import normalize_brightness
+import torch.nn.functional as F
 
 class NICER(nn.Module):
 
@@ -32,6 +33,11 @@ class NICER(nn.Module):
         self.filters = torch.tensor([0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0], dtype=torch.float32, requires_grad=True, device=device)
         self.can = can
         self.nima = nima
+        self.isRaw = False
+        self.rawTensor = None
+        self.rawImage_enhanced = None
+        self.rawTensor_resized = None
+
         self.gamma = config.gamma
 
         if config.optim == 'sgd':
@@ -66,19 +72,32 @@ class NICER(nn.Module):
     def set_gamma(self, gamma):
         self.gamma = gamma
 
-    def single_image_pass_can(self, image, resize=True, abn=False):
+    def single_image_pass_can(self, image, abn=False, called_to_save_raw=False):
+        """
+            pass an image through the CAN architecture 1 time. This is usually called from the GUI, to preview the images.
+            It is also called when the image is to be saved, since we then need to apply the final filter intensities onto the image.
 
-        if abn:
-            bright_norm_img = normalize_brightness(image, input_is_PIL=True)
-            image = Image.fromarray(bright_norm_img)
+            if called_to_save_raw is False, this method will return an 8bit image to show what the current filter combination looks
+            like (because PIL cannot process 16bit). If called_to_save_raw is true, it will return the enhanced 16bit image as
+            np.uint16 array, to be saved with opencv.imwrite() as 16bit png.
+        """
 
-        if image.size[1] > config.final_size or image.size[0] > config.final_size:
-            image_tensor = transforms.Compose([
-                transforms.Resize(config.final_size),
-                transforms.ToTensor()])(image)
+        if not called_to_save_raw:
+            # gets called from preview button, with an 8bit PIL image
+            if abn:
+                bright_norm_img = normalize_brightness(image, input_is_PIL=True)
+                image = Image.fromarray(bright_norm_img)
+
+            if image.size[1] > config.final_size or image.size[0] > config.final_size:
+                image_tensor = transforms.Compose([
+                    transforms.Resize(config.final_size),
+                    transforms.ToTensor()])(image)
+            else:
+                image_tensor = transforms.ToTensor()(image)
+
         else:
-            image_tensor = transforms.ToTensor()(image)  # gets called from gui, with a non-tensor image
-
+            # gets called from save button after editing a raw image
+            image_tensor = image
 
         filter_tensor = torch.zeros((8, image_tensor.shape[1], image_tensor.shape[2]), dtype=torch.float32).to(self.device)     # tensorshape [c,w,h]
         for l in range(8):
@@ -89,9 +108,15 @@ class NICER(nn.Module):
         enhanced_img = enhanced_img.cpu()
         enhanced_img = enhanced_img.detach().permute(2, 3, 1, 0).squeeze().numpy()
 
-        enhanced_clipped = np.clip(enhanced_img, 0.0, 1.0) * 255.0
-        enhanced_clipped = enhanced_clipped.astype('uint8')
-        return enhanced_clipped     # returns a np array
+        if not called_to_save_raw:
+            enhanced_clipped = np.clip(enhanced_img, 0.0, 1.0) * 255.0
+            enhanced_clipped = enhanced_clipped.astype('uint8')
+        else:
+            enhanced_clipped = np.clip(enhanced_img, 0.0, 1.0) * 65535.0
+            enhanced_clipped = enhanced_clipped.astype('uint16')
+
+        # returns a np.array of type np.uint8 or np.uint16 (if raw processing was used)
+        return enhanced_clipped
 
     def re_init(self):
         self.filters = torch.tensor([0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0], dtype=torch.float32, requires_grad=True, device=self.device)
@@ -102,26 +127,40 @@ class NICER(nn.Module):
         else:
             error_callback('optimizer')
 
-    #  TODO: autobright automatisch aufrufen???
-    def enhance_image(self, image_path, re_init=True, rescale_to_hd=True):  # accepts image_path as string, but also as PIL image object
+    def enhance_image(self, image_path, re_init=True, rescale_to_hd=True):
+        """
+            optimization routine that is called to enhance an image. Usually this is called from the NICER button in the GUI.
+            Accepts image path as a string, but also as PIL image.
+
+            If re_init is True, this was not called from GUI, but from batch mode to optimize whole folder. --> reset filters for each new image
+
+            Returns a re-sized 8bit image in any case, for displaying with PIL. In case of enhancing a raw enhancement, the enhanced
+            raw img is stored in nicer.rawImage_enhanced as 16bit np-array.
+        """
 
         if re_init:
-            self.re_init()  # not called from NICER button, but from batch mode in optimize_whole_folder -> new filters for each image run
+            self.re_init()
         else:
+            # re-init is false, i.e. use user_preset filters that are selected in the GUI
+            # re-init can be seen as test whether initial filter values (!= 0) should be used or not during optimization
             user_preset_filters = [self.filters[x].item() for x in range(8)]
-        # re-init can be seen as test whether initial filter values (!= 0) should be used or not during optimization
 
-        if isinstance(image_path, str):
-            bright_normalized_img = normalize_brightness(image_path)
-            pil_image = Image.fromarray(bright_normalized_img)
-            #pil_image = load_pil_img(image_path)
+        if not self.isRaw:
+            if isinstance(image_path, str):
+                bright_normalized_img = normalize_brightness(image_path)
+                pil_image = Image.fromarray(bright_normalized_img)
+            else:
+                pil_image = image_path
+                bright_normalized_img = normalize_brightness(pil_image, input_is_PIL=True)
+                pil_image = Image.fromarray(bright_normalized_img)
+
+            image_tensor_transformed = nima_transform(pil_image)
+
         else:
-            print("else")
-            pil_image = image_path
-            bright_normalized_img = normalize_brightness(pil_image, input_is_PIL=True)
-            pil_image = Image.fromarray(bright_normalized_img)
+            rawtensor_unsqueezed = self.rawTensor_resized
+            interpolated_tensor = F.interpolate(rawtensor_unsqueezed, size=(224,224))
+            image_tensor_transformed = interpolated_tensor.squeeze(dim=0)
 
-        image_tensor_transformed = nima_transform(pil_image)
         image_tensor_transformed_batched = image_tensor_transformed.unsqueeze(dim=0).to(self.device)
 
         with torch.no_grad():
@@ -148,7 +187,7 @@ class NICER(nn.Module):
                 losses.append(loss.item())
             else:
                 filters_for_plot[i] = [self.filters[x].item() for x in range(8)]
-                loss = loss_with_l2_regularization(distribution.cpu(), self.filters.cpu(), initial_filters=user_preset_filters, gamma=self.gamma)  # TODO: test, and gamma too
+                loss = loss_with_l2_regularization(distribution.cpu(), self.filters.cpu(), initial_filters=user_preset_filters, gamma=self.gamma)
                 losses.append(loss.item())
             loss.backward()
             self.optimizer.step()
@@ -158,13 +197,12 @@ class NICER(nn.Module):
         if config.plot_filter_intensities:
             plot_filter_intensities(filters_for_plot)
 
-        if rescale_to_hd:
-            if pil_image.size[0] > config.final_size or pil_image.size[1] > config.final_size:
-                original_tensor_transformed = hd_transform(pil_image)
-            else:
-                original_tensor_transformed = transforms.ToTensor()(pil_image)
-        else:
+        # the entire rescale thing is not needed, bc optimization happens on a smaller image (for speed improvement)
+        # real rescale is done during saving.
+        if not self.isRaw:
             original_tensor_transformed = transforms.ToTensor()(pil_image)
+        else:
+            original_tensor_transformed = self.rawTensor_resized.squeeze(dim=0)
 
         final_filters = torch.zeros((8, original_tensor_transformed.shape[1], original_tensor_transformed.shape[2]), dtype=torch.float32).to(self.device)
         for k in range(8):
@@ -173,13 +211,7 @@ class NICER(nn.Module):
         mapped_img = torch.cat((original_tensor_transformed, final_filters.cpu()), dim=0).unsqueeze(dim=0).to(self.device)
         enhanced_img = self.can(mapped_img)
 
-        retransform = transforms.Compose([
-            transforms.ToPILImage(),
-            transforms.Resize((224, 224)),
-            transforms.ToTensor()
-        ])
-
-        nima_sized_img = retransform(enhanced_img.squeeze(dim=0).cpu()).to(self.device)
+        nima_sized_img = F.interpolate(enhanced_img, size=(224,224)).squeeze(dim=0).cpu().to(self.device)
 
         with torch.no_grad():
             prediction = self.nima(nima_sized_img.unsqueeze(dim=0))
@@ -188,11 +220,19 @@ class NICER(nn.Module):
         enhanced_img = enhanced_img.cpu()
         enhanced_img = enhanced_img.detach().permute(2, 3, 1, 0).squeeze().numpy()
 
+        if self.isRaw:
+            enhanced_clipped = np.clip(enhanced_img, 0.0, 1.0) * 65535.0
+            enhanced_clipped = enhanced_clipped.astype('uint16')
+            self.rawImage_enhanced = enhanced_clipped
+
         enhanced_clipped = np.clip(enhanced_img, 0.0, 1.0) * 255.0
         enhanced_clipped = enhanced_clipped.astype('uint8')
 
+        # returns an 8bit image in any case ---
+        # if we are processing raw data, the resulting raw enhancement is stored in nicer.rawImage_enhanced
         return enhanced_clipped, initial_nima_score, final_nima_score
 
+    # TODO: test this with raw!
     def enhance_image_folder(self, folder_path, random=False):
         if not os.path.exists(os.path.join(folder_path, 'results')):
             os.mkdir(os.path.join(folder_path, 'results'))
@@ -230,18 +270,9 @@ class NICER(nn.Module):
         print_msg("Saved results. Finished.", 1)
 
 
-
-
 def plot_filter_intensities(intensities_for_plot):
     import matplotlib.pyplot as plt
     import matplotlib as mpl
-
-    mpl.use('pdf')
-    plt.rc('font', family='serif', serif='Times')
-    plt.rc('text', usetex=True)
-    plt.rc('xtick', labelsize=8)
-    plt.rc('ytick', labelsize=8)
-    plt.rc('axes', labelsize=8)
 
     from scipy.interpolate import make_interp_spline
     x_e = np.arange(1, config.epochs + 1)
@@ -297,7 +328,13 @@ def plot_filter_intensities(intensities_for_plot):
 
     ax.legend((h0[0], h1[0], h2[0], h3[0], h4[0], h7[0], h6[0], h5[0]), ('Sat', 'Con', 'Bri', 'Sha', 'Hig', 'Exp', 'LLF', 'NLD'))
 
-    fig.savefig('results.pdf')
-    #plt.show()
+    plt.show()
 
-    # returns enhanced image as np array
+    if config.save_filter_intensities:
+        mpl.use('pdf')
+        plt.rc('font', family='serif', serif='Times')
+        plt.rc('text', usetex=True)
+        plt.rc('xtick', labelsize=8)
+        plt.rc('ytick', labelsize=8)
+        plt.rc('axes', labelsize=8)
+        fig.savefig('results.pdf')

@@ -7,16 +7,19 @@ import config
 from nicer import NICER, print_msg
 import tkinter as tk
 from tkinter.ttk import Label, Button
+import imageio
+import webbrowser
+
 
 class NicerGui:
     def __init__(self, master, screen_size):
         if screen_size[0] > 1920:
-            screen_size = list(screen_size)     # when multiscreen, use only 1 screen
+            screen_size = list(screen_size)  # when multiscreen, use only 1 screen
             screen_size[0] = 1920
             screen_size[1] = 1080
         self.master = master
-        self.height = int(0.85*screen_size[1])
-        self.width = int(0.85*screen_size[0])
+        self.height = int(0.85 * screen_size[1])
+        self.width = int(0.85 * screen_size[0])
         master.title("NICER - Neural Image Correction and Enhancement Routine")
         master.geometry(str(self.width) + 'x' + str(self.height))  # let gui be x% of screen, centered
         sliderlength = 200
@@ -31,6 +34,7 @@ class NicerGui:
         self.img_extension = None
         self.helper_x = None
         self.helper_y = None
+        self.folderpath = None
 
         # labels:
         if True:
@@ -44,7 +48,7 @@ class NicerGui:
             self.nonlocaldehazing_label = Label(master, text="Non-Local Dehazing")
             self.gamma_label = Label(master, text="Gamma")
             self.print_label = Label(master, text="Open an image to get started!")
-            self.print_label.place(x = int(0.635*self.width), y = int(0.96*self.height))     # TODO noch nicht variabel
+            self.print_label.place(x=int(0.635 * self.width), y=int(0.96 * self.height))  # TODO noch nicht variabel
             self.slider_labels = [self.saturation_label, self.contrast_label, self.brightness_label, self.shadows_label,
                                   self.highlights_label, self.exposure_label, self.locallaplacian_label, self.nonlocaldehazing_label]
 
@@ -86,11 +90,11 @@ class NicerGui:
         # create images and line, and place them
         if True:
             w = tk.Canvas(master, width=20, height=self.height)
-            w.place(x=int(0.365*self.width), y=10)
-            w.create_line(10, 20, 10, int(0.9*self.height), fill="#476042", dash=(4,4))
+            w.place(x=int(0.365 * self.width), y=10)
+            w.create_line(10, 20, 10, int(0.9 * self.height), fill="#476042", dash=(4, 4))
 
-            pil_img_one = Image.new('RGB', (224,224), (255, 255, 255))
-            pil_img_two = Image.new('RGB', (224,224), (150, 150, 150))
+            pil_img_one = Image.new('RGB', (224, 224), (255, 255, 255))
+            pil_img_two = Image.new('RGB', (224, 224), (150, 150, 150))
             tk_img_one = ImageTk.PhotoImage(pil_img_one)
             tk_img_two = ImageTk.PhotoImage(pil_img_two)
             self.tk_img_panel_one = Label(master, image=tk_img_one)
@@ -102,17 +106,17 @@ class NicerGui:
         # place sliders and their labels:
         if True:
             # get 65% of screen height:
-            three_quarters = int(0.65*self.height)
-            space = (three_quarters-30)/7
+            three_quarters = int(0.65 * self.height)
+            space = (three_quarters - 30) / 7
 
             for idx, label in enumerate(self.slider_labels):
                 label.place(x=20, y=30 + idx * space)
             for idx, label in enumerate(self.sliders):
                 label.place(x=150, y=10 + idx * space)
 
-            gamma_space = 2*space if space<60 else 120
-            self.gamma_label.place(x=20, y=50+6*space+gamma_space)
-            self.gamma_slider.place(x=150, y=30+6*space+gamma_space)
+            gamma_space = 2 * space if space < 60 else 120
+            self.gamma_label.place(x=20, y=50 + 6 * space + gamma_space)
+            self.gamma_slider.place(x=150, y=30 + 6 * space + gamma_space)
 
         # create buttons and place
         if True:
@@ -120,39 +124,72 @@ class NicerGui:
             self.save_button = Button(master, text="Save Image", command=self.save_image)
             self.reset_button = Button(master, text="Reset", command=self.reset_all)
             self.preview_button = Button(master, text="Preview", command=self.preview)
-            self.nicer_button = Button(master, text="NICER!", command=self.nicer_enhance)
+            self.nicer_button = Button(master, text="NICER!", command=self.nicer_routine)
+            self.folder_button = Button(master, text="Open Folder", command=self.open_folder)
+            self.about_button = Button(master, text="About", command=self.about)
 
-            screen_center = int(self.width/2.0)
-            button_y = 50+6*space+gamma_space + 50
+            screen_center = int(self.width / 2.0)
+            button_y = 50 + 6 * space + gamma_space + 50
             self.open_button.place(x=40, y=button_y)
-            self.save_button.place(x=40, y=button_y+40)
-            self.nicer_button.place(x=40 + 100, y=button_y+20)
+            self.save_button.place(x=40, y=button_y + 40)
+            self.nicer_button.place(x=40 + 105, y=button_y + 20)
             self.preview_button.place(x=40 + 200, y=button_y)
-            self.reset_button.place(x=40 + 200, y=button_y+40)
+            self.reset_button.place(x=40 + 200, y=button_y + 40)
+            self.folder_button.place(x=40, y=button_y+80)
+            self.about_button.place(x = 40+200, y=button_y+80)
 
-    def open_image(self):
+    def open_folder(self):
+        folderpath = filedialog.askdirectory(title="Select directory to batch-enhance")
+        self.folderpath = folderpath
+        if len(folderpath) is None:
+            self.print_label['text'] = "No valid file path."
+            return
+        else:
+            self.print_label['text'] = "Ready to batch-enhance folder!"
+            #self.batch_enhance(folderpath)
+
+    def about(self):
+        url = "https://github.com/mr-Mojo/NICER#how-does-it-work"
+        webbrowser.open(url, new=1)
+
+    def open_image(self, called_from_batch=False, img_path=None):
         """
         opens an image, if the image extension is supported in config.py. Currently supported extensions are jpg, png and dng, although
         more might work. The image is resized for displaying. A reference for further processing is stored in self.reference_img_fullSize.
         """
 
-        filepath = filedialog.askopenfilename(initialdir = os.getcwd(), title = "Select an image to open",
-                                   filetypes = (("jpg files","*.jpg"),("png files","*.png"),("all files","*.*")))
+        if called_from_batch is False:
+            filepath = filedialog.askopenfilename(initialdir=os.getcwd(), title="Select an image to open",
+                                                  filetypes=(("jpg files", "*.jpg"), ("png files", "*.png"), ("raw files", "*.dng"), ("all files", "*.*")))
 
-        if filepath is None: return
+            if filepath is None: return
+        else:
+            filepath = img_path
 
-        if filepath.split('.')[-1] in config.supported_extensions or filepath.split('.')[-1] in config.supported_extensions_raw:
+        if called_from_batch or filepath.split('.')[-1] in config.supported_extensions or filepath.split('.')[-1] in config.supported_extensions_raw:
 
             self.img_namestring = filepath.split('.')[0]
             self.img_extension = filepath.split('.')[-1]
 
-            pil_img = Image.open(filepath)
+            if filepath.split('.')[-1] in config.supported_extensions:
+                self.nicer.isRaw = False
+                pil_img = Image.open(filepath)
+
+            elif filepath.split('.')[-1] in config.supported_extensions_raw:
+                self.nicer.isRaw = True
+                with rawpy.imread(filepath) as rawFile:
+                    raw_array = rawFile.postprocess(output_bps=16)
+                rgb_float = raw_array.astype(np.float32) / 65535.0  # norm to [0,1]
+                raw_tensor = transforms.ToTensor()(rgb_float)  # PIL can't handle uint16 or float32, but PIL is just for display. Raw is stored in tensor
+                self.nicer.rawTensor = raw_tensor
+                pil_img = transforms.ToPILImage()(raw_tensor)  # convert tensor to PIL, for display only
+
             img_width = pil_img.size[0]
             img_height = pil_img.size[1]
 
             # dirty hack to avoid errors when image is a square:
             if img_width == img_height:
-                pil_img = pil_img.resize((img_width, img_height-1))
+                pil_img = pil_img.resize((img_width, img_height - 1))
                 img_width = pil_img.size[0]
                 img_height = pil_img.size[1]
 
@@ -164,14 +201,14 @@ class NicerGui:
 
             # margins of the display canvas: 0.6*windowwidth, 0.9*windowheight
             if img_width > img_height:
-                max_width = int(0.6*self.width)         # images wider than high: place above each other
-                max_height = int(0.5*0.9*self.height)   # max height is half the display canvas
+                max_width = int(0.6 * self.width)  # images wider than high: place above each other
+                max_height = int(0.5 * 0.9 * self.height)  # max height is half the display canvas
 
             elif img_height > img_width:
-                max_width = int(0.5*0.6*self.width)       # images higher than wide: place next to each other
-                max_height = int(0.9*self.width)
+                max_width = int(0.5 * 0.6 * self.width)  # images higher than wide: place next to each other
+                max_height = int(0.9 * self.width)
 
-            max_size = int(0.9*self.height) if img_height>img_width else int(0.6*self.width)
+            max_size = int(0.9 * self.height) if img_height > img_width else int(0.6 * self.width)
 
             # just to that there are no errors if image is not resized:
             new_img_width = img_width
@@ -181,17 +218,17 @@ class NicerGui:
             if max(pil_img.size) > max_size or pil_img.size[1] > max_height or pil_img.size[0] > max_width:
                 longer_side = max(pil_img.size)
                 factor = max_size / longer_side
-                new_img_width = int(img_width*factor)
-                new_img_height = int(img_height*factor)
+                new_img_width = int(img_width * factor)
+                new_img_height = int(img_height * factor)
 
-                if img_width > img_height and new_img_height > max_height:      # landscape format
+                if img_width > img_height and new_img_height > max_height:  # landscape format
                     while new_img_height > max_height:
                         factor *= 0.99
                         print_msg("reduced factor to %f" % factor, 3)
                         new_img_width = int(img_width * factor)
                         new_img_height = int(img_height * factor)
 
-                elif img_height > img_width and new_img_width > max_width:      # portrait format
+                elif img_height > img_width and new_img_width > max_width:  # portrait format
                     while new_img_width > max_width:
                         factor *= 0.99
                         print_msg("reduced factor to %f" % factor, 3)
@@ -200,6 +237,8 @@ class NicerGui:
 
                 # img is now resized in a way for 2 images to fit next to each other
                 pil_img = pil_img.resize((new_img_width, new_img_height))
+                if self.nicer.isRaw:
+                    self.nicer.rawTensor_resized = F.interpolate(self.nicer.rawTensor.unsqueeze(dim=0), size=(new_img_height, new_img_width))
 
             self.reference_img1 = pil_img
             tkImage = ImageTk.PhotoImage(pil_img)
@@ -213,28 +252,28 @@ class NicerGui:
             self.tk_img_panel_two.image = tkImage_dummy
             self.tk_img_panel_two.configure(image=tkImage_dummy)
 
-            offset_y = int(0.05*self.height)
-            offset_x = int(0.365*self.width) + 10       # bc line is offset for 10
+            offset_y = int(0.05 * self.height)
+            offset_x = int(0.365 * self.width) + 10  # bc line is offset for 10
             space_btwn_imgs = 10
 
             # "place" geometry manager has 0/0 in the upper left corner -> can easily be seen when setting x=y=0
 
-            if img_width > img_height:      # wider than high: place above each other
-                space_right_of_line = 0.635*0.5*self.width                          # get free space right of line
-                img_x = offset_x + int((space_right_of_line-0.5*pil_img.size[0]))   # shift it by line offset, get half
-                vertical_middle = 0.9*0.5*self.height                               # get available vertical space, middle it
+            if img_width > img_height:  # wider than high: place above each other
+                space_right_of_line = 0.635 * 0.5 * self.width  # get free space right of line
+                img_x = offset_x + int((space_right_of_line - 0.5 * pil_img.size[0]))  # shift it by line offset, get half
+                vertical_middle = 0.9 * 0.5 * self.height  # get available vertical space, middle it
                 img_y1 = offset_y + vertical_middle - pil_img.size[1]
                 img_y2 = offset_y + vertical_middle + space_btwn_imgs
-                self.tk_img_panel_one.place(x = img_x, y = img_y1)
-                self.tk_img_panel_two.place(x = img_x, y = img_y2)
+                self.tk_img_panel_one.place(x=img_x, y=img_y1)
+                self.tk_img_panel_two.place(x=img_x, y=img_y2)
                 self.helper_x = img_x
                 self.helper_y = img_y2
 
-            if img_height > img_width:      # higher than wide: place next to each other
-                img_x1 = offset_x + int(0.635*0.5*self.width) - pil_img.size[0]       # get space right of line, divide it by two, subtract img width
-                img_x2 = offset_x + int(0.635*0.5*self.width) + space_btwn_imgs       # get space right of line, add small constant
+            if img_height > img_width:  # higher than wide: place next to each other
+                img_x1 = offset_x + int(0.635 * 0.5 * self.width) - pil_img.size[0]  # get space right of line, divide it by two, subtract img width
+                img_x2 = offset_x + int(0.635 * 0.5 * self.width) + space_btwn_imgs  # get space right of line, add small constant
                 vertical_middle = 0.9 * 0.5 * self.height  # get available vertical space, middle it
-                img_y = offset_y + vertical_middle - int(pil_img.size[1]*0.5)
+                img_y = offset_y + vertical_middle - int(pil_img.size[1] * 0.5)
                 self.tk_img_panel_one.place(x=img_x1, y=img_y)
                 self.tk_img_panel_two.place(x=img_x2, y=img_y)
                 self.helper_x = img_x2
@@ -247,45 +286,82 @@ class NicerGui:
             self.print_label['text'] = "No valid image format. Use a format specified in the config."
             return None
 
-    def save_image(self):
+    # final can pass with found filter intensities happens in save_image for the full resolution image (to save time during optimization,
+    # the optimization happens on the rescaled image
+    def save_image(self, called_from_batch=False, save_path=None):
         """
         saves an image, if it has previously been modfied (i.e., if the slider values != 0). For saving, the current slider values are used as
-        CAN input and applied to the full size reference image, which is stored in self.reference_img_1_fullSize
+        CAN input and applied to the full size reference image, which is stored in self.reference_img_1_fullSize or self.nice.rawTensor
         """
 
-        if self.tk_img_panel_two.winfo_ismapped() and self.slider_variables:
-            filepath = filedialog.asksaveasfilename(initialdir = os.getcwd(), title = "Save the edited image",
-                                                       filetypes = (("jpeg files","*.jpg"),("all files","*.*")))
+        if self.tk_img_panel_two.winfo_ismapped() and self.slider_variables and called_from_batch is False:
+            filepath = filedialog.asksaveasfilename(initialdir=os.getcwd(), title="Save the edited image",
+                                                    filetypes=(("as jpg file", "*.jpg"),
+                                                               ("as raw file", "*.png"),
+                                                               ("all files", "*.*")))
+
             if len(filepath.split('.')) == 1:
-                filepath += '.jpg'
-
-            current_filer_values, current_gamma = self.get_all_slider_values()
-            self.nicer.set_filters(current_filer_values)
-            self.nicer.set_gamma(current_gamma)
-
-            # calc a factor for resizing to config.final_size
-            width, height = self.reference_img1_fullSize.size
-            if width > config.final_size or height > config.final_size:
-                print_msg("Resizing to {}p before saving".format(str(config.final_size)), 3)
-                if height > width:
-                    factor = config.final_size / height
+                if not self.nicer.isRaw:
+                    filepath += '.jpg'
                 else:
-                    factor = config.final_size / width
+                    filepath += '.png'
 
-                width = int(width*factor)
-                height = int(height*factor)
+            self.print_label['text'] = 'Saving image...'
 
-                hd_image = self.nicer.single_image_pass_can(self.reference_img1_fullSize.resize((width,height)))
-                hd_image_pil = Image.fromarray(hd_image)
+        elif called_from_batch is True:
+            if not self.nicer.isRaw:
+                filepath = save_path
             else:
-                # dims < config.final_size on the longest side, no resizing
-                hd_image = self.nicer.single_image_pass_can(self.reference_img2)
-                hd_image_pil = Image.fromarray(hd_image)
-
-            hd_image_pil.save(filepath)
-            self.print_label['text'] = 'Image saved sucessfully!'
+                extension = save_path.split('.')[-1]
+                filepath = save_path.replace(extension, 'png')
         else:
             self.print_label['text'] = 'Load and edit an image first!'
+            return
+
+        current_filer_values, current_gamma = self.get_all_slider_values()
+        self.nicer.set_filters(current_filer_values)
+        self.nicer.set_gamma(current_gamma)
+
+        # calc a factor for resizing to config.final_size
+        if not self.nicer.isRaw:
+            width, height = self.reference_img1_fullSize.size  # img.size: (width, height)
+        else:
+            height = self.nicer.rawTensor.shape[1]  # tensor shape: [channels x height x width]
+            width = self.nicer.rawTensor.shape[2]
+
+        if width > config.final_size or height > config.final_size:
+            print_msg("Resizing to {}p before saving".format(str(config.final_size)), 3)
+            if height > width:
+                factor = config.final_size / height
+            else:
+                factor = config.final_size / width
+
+            width = int(width * factor)
+            height = int(height * factor)
+
+            if not self.nicer.isRaw:
+                hd_image = self.nicer.single_image_pass_can(self.reference_img1_fullSize.resize((width, height)), abn=True)
+                hd_image_pil = Image.fromarray(hd_image)
+            else:
+                tensor_resized = F.interpolate(self.nicer.rawTensor.unsqueeze(dim=0), size=(height, width)).squeeze(dim=0)
+                numpy_enhanced = self.nicer.single_image_pass_can(tensor_resized, called_to_save_raw=True)
+                cv2.imwrite(filepath, cv2.cvtColor(numpy_enhanced, cv2.COLOR_RGB2BGR))
+        else:
+
+            # dims < config.final_size on the longest side, no resizing
+            if not self.nicer.isRaw:
+                hd_image = self.nicer.single_image_pass_can(self.reference_img1, abn=True)
+                hd_image_pil = Image.fromarray(hd_image)
+            else:
+                numpy_enhanced = self.nicer.single_image_pass_can(self.nicer.rawTensor, called_to_save_raw=True)  # TODO: untested
+                cv2.imwrite(filepath, cv2.cvtColor(numpy_enhanced, cv2.COLOR_RGB2BGR))
+
+        if not self.nicer.isRaw:
+            hd_image_pil.save(filepath)
+
+        self.print_label['text'] = 'Image saved sucessfully!'
+        # else:
+        #     self.print_label['text'] = 'Load and edit an image first!'
 
     def reset_all(self):
         """ reset GUI and slider values """
@@ -294,7 +370,7 @@ class NicerGui:
         self.gamma_slider.set(0.100)
         for variable in self.slider_variables:
             variable.set(0)
-        #self.tk_img_panel_one.place_forget()       # leave the current image, reset only filters and edited img
+        # self.tk_img_panel_one.place_forget()       # leave the current image, reset only filters and edited img
         self.tk_img_panel_two.place_forget()
 
     def preview(self):
@@ -304,7 +380,7 @@ class NicerGui:
             current_filer_values, current_gamma = self.get_all_slider_values()
             self.nicer.set_filters(current_filer_values)
             self.nicer.set_gamma(current_gamma)
-            preview_image = self.nicer.single_image_pass_can(self.reference_img1)
+            preview_image = self.nicer.single_image_pass_can(self.reference_img1)  # raw not used here, just jpg for display
             self.reference_img2 = Image.fromarray(preview_image)
             self.display_img_two()
         else:
@@ -317,8 +393,8 @@ class NicerGui:
         self.tk_img_panel_two.configure(image=tk_preview)
 
     def get_all_slider_values(self):
-        values = [var.get()/100.0 for var in self.slider_variables]
-        print(values, self.gamma.get())         # debug
+        values = [var.get() / 100.0 for var in self.slider_variables]
+        print(values, self.gamma.get())  # debug
         return values, self.gamma.get()
 
     def set_all_image_filter_sliders(self, valueList):
@@ -337,13 +413,22 @@ class NicerGui:
         self.slider_variables[5].set(valueList[7])
 
 
-    def nicer_enhance(self):
+    def nicer_routine(self):
+        if self.folderpath is not None:
+            print("yes")
+            self.batch_enhance(self.folderpath)
+        else:
+            self.nicer_enhance()
+
+    def nicer_enhance(self, called_from_batch=False):
+
         # check if image is yet available, else do nothing
-        if self.tk_img_panel_one.winfo_ismapped():
+        if self.tk_img_panel_one.winfo_ismapped() or called_from_batch:
 
-            self.nicer.re_init()    # reset all old values before enhancing
+            self.nicer.re_init()  # reset everything, especially optimizers, for a fresh optimization
 
-            slider_vals, gamma = self.get_all_slider_values()       # get values from sliders and set
+            # get slider values and set them for the optimization routine
+            slider_vals, gamma = self.get_all_slider_values()
             self.nicer.set_filters(slider_vals)
             self.nicer.set_gamma(gamma)
 
@@ -353,17 +438,51 @@ class NicerGui:
 
             if not custom_filters:
                 print_msg("All filters are zero.", 2)
-                enhanced_img, img_score_initial, img_score_final = self.nicer.enhance_image(self.reference_img1, re_init=True, rescale_to_hd=True)
+                if not self.nicer.isRaw:
+                    enhanced_img, img_score_initial, img_score_final = self.nicer.enhance_image(self.reference_img1, re_init=True, rescale_to_hd=True)
+                else:
+                    enhanced_tensor, img_score_initial, img_score_final = self.nicer.enhance_image(None, re_init=True, rescale_to_hd=True)
+                    enhanced_img = enhanced_tensor
             else:
                 print_msg("Using user-defined filter preset", 2)
-                enhanced_img, img_score_initial, img_score_final = self.nicer.enhance_image(self.reference_img1, re_init=False, rescale_to_hd=True)
+                if not self.nicer.isRaw:
+                    enhanced_img, img_score_initial, img_score_final = self.nicer.enhance_image(self.reference_img1, re_init=False, rescale_to_hd=True)
+                else:
+                    enhanced_img, img_score_initial, img_score_final = self.nicer.enhance_image(None, re_init=False, rescale_to_hd=True)
 
             enhanced_img_pil = Image.fromarray(enhanced_img)
+            # enhanced image is np array uint8 in any case.
+            # if rawTensor was used, resulting enhanced raw img is stored in nicer.rawImage_enhanced for saving
+            # the saving routine saves the correct img
+
             self.reference_img2 = enhanced_img_pil
             self.display_img_two()
 
-            new_filters = [self.nicer.filters[x].item()*100 for x in range(8)]
+            new_filters = [self.nicer.filters[x].item() * 100 for x in range(8)]
             self.set_all_image_filter_sliders(new_filters)
 
         else:
             self.print_label['text'] = "Load image first."
+
+
+    def batch_enhance(self, folderpath):
+        self.folderpath = None
+        fileList = [x for x in folderpath if x.split('.')[-1] in config.supported_extensions or x.split('.')[-1] in config.supported_extensions_raw]
+        count = 0
+        for element in os.listdir(folderpath):
+            element_extension = element.split('.')[-1]
+            if element_extension not in config.supported_extensions_raw and element_extension not in config.supported_extensions:
+                continue
+            count += 1
+            print_msg("Enhancing image {} of {}".format(count, len(fileList)), 2)
+
+            print(element)
+            new_filename = element.replace('.' + element_extension, '_edited.' + element_extension)
+            self.reset_all()
+            # otherwise, element is either img or raw file
+            self.open_image(called_from_batch=True, img_path=os.path.join(folderpath,element))      # --> open & display
+            self.nicer_enhance(called_from_batch=True)
+            self.save_image(called_from_batch=True, save_path=os.path.join(folderpath, new_filename))
+
+            print("Done")
+

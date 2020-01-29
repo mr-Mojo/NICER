@@ -8,10 +8,9 @@ from gui import NicerGui
 # TODOs:
 
 # high priority:
-# -- verify RAW support
-# -- enable automatic ABN
-# -- create runnable main --> eigentlich nur die Zeilen von gui.py rüberkopieren
-# -- replace all occurences of 1080 with config.final_size
+# -- verify RAW support for folders
+# -- create folder mode --> evtl noch nen button mit folder und einen mit about hinzufügen 
+
 
 # medium to low priority:
 # -- fix imports
@@ -20,7 +19,6 @@ from gui import NicerGui
 # -- choose suitable images to upload
 # -- resize images so they are smaller in size and require less space
 # --
-
 if __name__ == '__main__':
 
     root = Tk()
