@@ -11,8 +11,7 @@ manipulation network towards perceptually pleasing results.
 
 To install and run this framework, it is recommended that you create a `conda` environment. If you have anaconda installed, simply do so by typing
 `conda create -n my_env`, where `my_env` is the name of the environment. To activate the environment, run 
-`source activate my_env`.  
-Afterwards, head over to https://pytorch.org/get-started/locally and install the appropriate PyTorch version (with `cuda`
+`source activate my_env`.  Afterwards, head over to https://pytorch.org/get-started/locally and install the appropriate PyTorch version (with `cuda`
 support, if you have access to a GPU). In my case, this was: 
 
 `conda install pytorch torchvision cudatoolkit=10.1 -c pytorch`
@@ -48,4 +47,4 @@ repeated until converge, yielding the most beautiful version of the image - acco
 </p>
 
 ## How to run it? 
-More readme to come soon. 
+Simply run `main.py`.
