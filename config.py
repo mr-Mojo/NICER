@@ -2,7 +2,7 @@
 # ----- NICER parameters:
 
 filter_count = 8
-can_checkpoint_path = 'models/can_exp9_final.pt'
+can_checkpoint_path = 'models/can8_epoch10_final.pt'
 nima_checkpoint_path = 'models/nima_vgg_bright2.pkl'
 
 gamma = 0.1
