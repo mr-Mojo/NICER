@@ -48,4 +48,6 @@ repeated until converge, yielding the most beautiful version of the image - acco
 </p>
 
 ## How to run it? 
-More readme to come soon. 
+This repository contains an interactive GUI for NICER. To start the GUI, simply run `main.py`. 
+
+More readme will follow soon. 
