@@ -51,3 +51,11 @@ repeated until converge, yielding the most beautiful version of the image - acco
 This repository contains an interactive GUI for NICER. To start the GUI, simply run `main.py`. 
 
 More readme will follow soon. 
+
+## Results 
+
+
+<p align="center">
+    <img src="https://github.com/mr-Mojo/NICER/blob/master/imgs/results.png" width="924" height="648">
+</p>
+
