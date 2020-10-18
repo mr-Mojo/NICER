@@ -21,4 +21,3 @@ Once PyTorch is installed, go ahead and clone this repository. Then install the 
 `pip install opencv-python` \
 `pip install -r requirements.txt`
 
-If all is well, you should then be able to run `python main.py` to start up the GUI. Code tested on Ubuntu and Windows 10. 
