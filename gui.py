@@ -198,7 +198,7 @@ class NicerGui:
             self.epochBox.place(x=40 + 160, y=button_y - 5)
 
     def about(self):
-        url = "https://github.com/mr-Mojo/NICER#how-does-it-work"  # TODO: nach push ändern
+        url = 'https://github.com/mr-Mojo/NICER'
         webbrowser.open(url, new=1)
 
     def stop(self):
