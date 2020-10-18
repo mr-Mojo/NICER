@@ -4,6 +4,7 @@
 This repository contains a PyTorch implementation of: 
 
 **"NICER: Aesthetic Image Enhancement with Humans in the Loop" [ACHI2020]**
+(link will follow when available)
 
 by [M. Fischer](https://github.com/mr-Mojo), [K. Kobs](http://www.dmir.uni-wuerzburg.de/staff/kobs/) and [A. Hotho](http://www.dmir.uni-wuerzburg.de/staff/hotho/)
 
