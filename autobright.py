@@ -1,5 +1,14 @@
-from imports import *
+import math
+import os
+
+import cv2
+import matplotlib.pyplot as plt
+import numpy as np
+from PIL import Image, ImageStat
+from skimage.metrics import structural_similarity as ssim
+
 from utils import print_msg
+
 
 def get_ssim(img_true, img_manipulated):
     img_true = cv2.resize(img_true, (400, 300))  # resize for speed
@@ -65,8 +74,7 @@ def rescale_hsv(img, value):
     return bright_img
 
 
-# Automatic brightness and contrast optimization with optional histogram clipping
-def auto_bright(image, clip_hist_percent=5.0, plot=False):            # TODO: make this work for RAW images
+def auto_bright(image, clip_hist_percent=5.0, plot=False):
     gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
     isRaw = False
 
@@ -79,18 +87,6 @@ def auto_bright(image, clip_hist_percent=5.0, plot=False):            # TODO: ma
         hist = cv2.calcHist([gray * 256], [0], None, [65536], [0, 65536])
         hist_size = len(hist)
 
-    # # Locate 50 percent of rising edge:
-    # fifty_percent = np.amax(hist)/2.0
-    # fifty_min = 0
-    # while hist[fifty_min] < fifty_percent:
-    #     fifty_min += 1
-    #
-    # # Locate 50 percent of falling edge:
-    # fifty_max = hist_size-1
-    # while hist[fifty_max] <= fifty_percent:
-    #     fifty_max -= 1
-
-    # Calculate cumulative distribution from the histogram
     accumulator = []
     accumulator.append(float(hist[0]))
     for index in range(1, hist_size):
@@ -134,25 +130,24 @@ def auto_bright(image, clip_hist_percent=5.0, plot=False):            # TODO: ma
 
 # returns a cv2.image that has been brightness normalized
 def normalize_brightness(img_path, input_is_PIL=False, verbose=False):
-
     if input_is_PIL == False:
         img = cv2.imread(img_path)
         brightness = get_brightness(img_path)
     else:
-        img = np.array(img_path)        # convert PIL to np to opencv
-        brightness = get_brightness(img_path, read=False)       # brightness uses PIL
+        img = np.array(img_path)  # convert PIL to np to opencv
+        brightness = get_brightness(img_path, read=False)  # brightness uses PIL
         img = cv2.cvtColor(img, cv2.COLOR_RGB2BGR)
 
     bright_img = None
 
-    print_msg("ABN - PIL brightness: \t\t {}".format(brightness), 2)
+    print_msg("ABN - PIL brightness: {}".format(brightness), 2)
     # best brightness is 128, allow margin of +-30
 
     # image too dark
     if brightness < 90 or (95 > brightness > 85):
 
         # image too dark, with lots of blacks: use ScaleAbs, bc HSV shift produces artifacts
-        if brightness < 33:  # hard cut, can we solve this somehow more fuzzy?
+        if brightness < 33:
             bright_img = cv2.convertScaleAbs(img, alpha=1.1, beta=0)
             print_msg("ABN - converted a very dark image with ScaleAbs", 2)
 
@@ -175,7 +170,7 @@ def normalize_brightness(img_path, input_is_PIL=False, verbose=False):
                     psnr = get_psnr(img, bright_img)
                     if shift < 1.0: break
 
-                print_msg("ABN - corrected a dark image with HSV shift",2)
+                print_msg("ABN - corrected a dark image with HSV shift", 2)
 
         # brightness between 70 and 95 -> just a little dark, apply slight scaleAbs
         else:
@@ -228,13 +223,13 @@ def normalize_brightness(img_path, input_is_PIL=False, verbose=False):
     # bright_img_np = cv2.cvtColor(bright_img, cv2.COLOR_BGR2RGB)
     # bright_img_final = Image.fromarray(bright_img_np)
 
-    bright_img = cv2.cvtColor(bright_img, cv2.COLOR_BGR2RGB)        # returns the image in RGB, if you want to use it with opencv again, reconvert to BGR
+    # returns the image in RGB
+    bright_img = cv2.cvtColor(bright_img, cv2.COLOR_BGR2RGB)
     return bright_img
 
 
 def correct_image_folder(path, save_corrected=True, verbose=False, resize=False, resize_factor=0.5,
                          show_output=False, extension='.jpg'):
-
     """
     Will correct all images in a given folder that end with extension and need correction,
     and save them to a new folder named /corrected within the same directory
@@ -257,9 +252,9 @@ def correct_image_folder(path, save_corrected=True, verbose=False, resize=False,
     for idx, img_name in enumerate(sorted(os.listdir(path))):
         if not img_name.endswith(extension): continue
 
-        print("Normalizing img {} of {}".format(idx,len(os.listdir(path))))
+        print("Normalizing img {} of {}".format(idx, len(os.listdir(path))))
 
-        # TODO: refactor resize
+        # currently unavailable
         # if resize:
         #     try:
         #         width, height, depth = img.shape  # RGB
@@ -269,19 +264,18 @@ def correct_image_folder(path, save_corrected=True, verbose=False, resize=False,
         #     new_height = int(height * resize_factor)
         #     img = cv2.resize(img, (new_height, new_width))
 
-
         bright_img = normalize_brightness(os.path.join(path, img_name))
 
         # brightness correction finished.
         # display and print results of correction:
 
         if bright_img is not None and verbose:
-                print("PIL brightness (new): \t\t", get_brightness(Image.fromarray(bright_img), read=False))
+            print("PIL brightness (new): \t\t", get_brightness(Image.fromarray(bright_img), read=False))
 
         if bright_img is not None and show_output:
             cv2.imshow("brightened", bright_img)
         elif show_output:
-            img = cv2.imread(os.path.join(path,img_name))
+            img = cv2.imread(os.path.join(path, img_name))
             cv2.imshow("original", img)
             cv2.waitKey()
 
@@ -289,7 +283,7 @@ def correct_image_folder(path, save_corrected=True, verbose=False, resize=False,
             dest = os.path.join(path, 'corrected')
             if not os.path.exists(dest):
                 os.mkdir(dest)
-            bright_img = cv2.cvtColor(bright_img, cv2.COLOR_RGB2BGR)        # retransform 2 BGR because else imgs look weird
+            bright_img = cv2.cvtColor(bright_img, cv2.COLOR_RGB2BGR)
             cv2.imwrite(os.path.join(dest, img_name), bright_img)
 
     print("Done.")
