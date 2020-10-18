@@ -1,5 +1,15 @@
-from imports import *
+import sys
+from collections.abc import Iterable
+
+import numpy as np
+import rawpy
+import torch
+import torchvision.transforms as transforms
+from PIL import Image
+from skimage.transform import resize
+
 import config
+
 
 def error_callback(caller):
     if caller in ['mae', 'mse', 'mae_channelwise', 'ssim', 'psnr']:
@@ -23,9 +33,8 @@ nima_transform = transforms.Compose([
     transforms.ToTensor()
 ])
 
-
-hd_transform = transforms.Compose([     # use before saving the big image, to avoid out of memory errors
-    transforms.Resize(1080),
+hd_transform = transforms.Compose([  # used before saving the final image, to avoid out of memory errors
+    transforms.Resize(config.final_size),  # smaller edge will be matched to this
     transforms.ToTensor()
 ])
 
@@ -35,7 +44,7 @@ def load_pil_img(path):
     return img
 
 
-def get_tensor_mean_as_tensor(nima_distribution):     # returns a tensor!
+def get_tensor_mean_as_tensor(nima_distribution):  # returns a tensor!
     out = nima_distribution.view(10, 1)
     mean = 0.0
     for j, e in enumerate(out, 1):
@@ -43,14 +52,15 @@ def get_tensor_mean_as_tensor(nima_distribution):     # returns a tensor!
     return mean
 
 
-def get_tensor_mean_as_float(nima_distribution):     # returns a float!
-    tensor_result = get_tensor_mean_as_tensor((nima_distribution))
+def get_tensor_mean_as_float(nima_distribution):  # returns a float!
+    tensor_result = get_tensor_mean_as_tensor(nima_distribution)
     return tensor_result.item()
 
 
 def print_msg(message, level):
     if level <= config.verbosity:
         print(message)
+
 
 def get_filter_index(filter_name):
     if filter_name == 'sat':
@@ -84,18 +94,18 @@ def get_tensor_from_raw_image(path, size=None):
     rgb_float = read_raw_img(path)
     if size:
         if isinstance(size, Iterable):
-            rgb_float_resized = resize(rgb_float, (224,224))
+            rgb_float_resized = resize(rgb_float, (224, 224))
         else:
             # size was given as 1 number: match longer side if it exceeds size, else leave it small as it is
             width, height, depth = rgb_float.shape
             if width > size or height > size:
                 if width > height:
-                    factor = size / width     # width * factor = 1080 --> factor = 1080/width
+                    factor = size / width  # width * factor = 1080 --> factor = 1080/width
                 else:
                     factor = size / height
                 new_width = int(width * factor)
                 new_height = int(height * factor)
-                rgb_float_resized = resize(rgb_float, (new_width, new_height)) # resize: (rows, cols)
+                rgb_float_resized = resize(rgb_float, (new_width, new_height))  # resize: (rows, cols)
             else:
                 rgb_float_resized = rgb_float
     else:
@@ -122,13 +132,14 @@ def loss_with_l2_regularization(nima_result, filters, gamma=config.gamma, initia
     distance_term = sum(single_emd_loss(desired_distribution, nima_result))
 
     if initial_filters is not None:
-        filter_deviations_from_initial = sum([(filters[x].item() - initial_filters[x]) ** 2 for x in range(len(filters))])  # l2: sum the deviation from user preset
+        filter_deviations_from_initial = sum([(filters[x].item() - initial_filters[x]) ** 2 for x in
+                                              range(len(filters))])  # l2: sum the deviation from user preset
         l2_term = filter_deviations_from_initial
-        print_msg("\nInitial Filters: {}".format(initial_filters),3)
+        print_msg("\nInitial Filters: {}".format(initial_filters), 3)
         print_msg("Current Filters: {}".format([filters[x].item() for x in range(8)]), 3)
         print_msg("Deviation from Initial: {}".format(filter_deviations_from_initial), 3)
         print_msg("L2 Term: {}".format(l2_term), 3)
     else:
-        l2_term = sum([fil**2 for fil in filters])                      # l2: sum the squares of all filters
+        l2_term = sum([fil ** 2 for fil in filters])  # l2: sum the squares of all filters
 
-    return distance_term + gamma*l2_term
+    return distance_term + gamma * l2_term
