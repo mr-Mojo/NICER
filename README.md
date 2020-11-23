@@ -7,7 +7,7 @@ This repository contains a PyTorch implementation of:
 
 
 by [M. Fischer](https://github.com/mr-Mojo), [K. Kobs](http://www.dmir.uni-wuerzburg.de/staff/kobs/) and [A. Hotho](http://www.dmir.uni-wuerzburg.de/staff/hotho/). 
-The link to the publication will be added as soon as it's available.  
+The publication can be found at the [ThinkMind(TM) Digital Library](https://www.thinkmind.org/index.php?view=article&articleid=achi_2020_5_390_20186). 
 
 
 ## Installation
