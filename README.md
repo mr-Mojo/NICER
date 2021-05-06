@@ -30,7 +30,16 @@ NICER is a differentiable, neural image enhancement tool. The original, unedited
 <p align="center">
   <img src="https://github.com/mr-Mojo/NICER/blob/master/imgs/fullpipe.png" width="800" height="550">
 </p>
-NIMA has the advantage that the user can interfere with the enhancement process at any time, be it before, during, or even after the optimization. Furthermore, the optimization happens in a white-box fashion, so users have control and can adjust parameters to their liking. 
+
+## Results 
+
+NICER has the advantage that the user can interfere with the enhancement process at any time, be it before, during, or even after the optimization. Furthermore, the optimization happens in a white-box fashion, so users have control and can adjust parameters to their liking. However, user interaction is not necessary and NICER's automatic mode also provides stunning results! Some results with images from the [MIT-Adobe 5K dataset](https://data.csail.mit.edu/graphics/fivek/) are shown here (upper row: original, lower row: NICER). For more, cf. the [publication](https://www.thinkmind.org/index.php?view=article&articleid=achi_2020_5_390_20186) 
+
+<p align="center">
+  <img src="https://github.com/mr-Mojo/NICER/blob/master/imgs/results.png" width="800" height="550">
+</p>
+
+
 
 ## Bibtex 
 
