@@ -21,13 +21,15 @@ Once PyTorch is installed, go ahead and clone this repository. Then install the 
 `pip install opencv-python` \
 `pip install -r requirements.txt`
 
-## Citation 
+## Bibtex 
 
-If you find this work and code useful, please consider citing the following publication in your work: 
+If you find this work and code useful, please cite our publication in your work: 
 
-`@article{fischer2020nicer,
+```
+@article{fischer2020nicer,
   title={NICER: Aesthetic Image Enhancement with Humans in the Loop},
   author={Fischer, Michael and Kobs, Konstantin and Hotho, Andreas},
   journal={arXiv preprint arXiv:2012.01778}, 
   year={2020}
-}`
+}
+```
